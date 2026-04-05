@@ -1140,13 +1140,14 @@
 
   if (themeToggleButton) {
     themeToggleButton.addEventListener("click", async () => {
-      if (!state.currentUser) return;
       const nextTheme = state.currentTheme === "dark" ? "light" : "dark";
       setTheme(nextTheme);
-      themeToggleButton.disabled = true;
-      await saveThemePreference(nextTheme);
-      themeToggleButton.disabled = false;
-      updateThemeToggleUi();
+      if (state.currentUser) {
+        themeToggleButton.disabled = true;
+        await saveThemePreference(nextTheme);
+        themeToggleButton.disabled = false;
+        updateThemeToggleUi();
+      }
     });
   }
 
