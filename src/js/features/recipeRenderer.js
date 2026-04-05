@@ -1,0 +1,322 @@
+function createRecipeRenderer({
+  dom,
+  state,
+  hasSupabaseConfig,
+  helpers,
+  getSignedImageUrl,
+  setDetailOpen,
+  logSupabaseError
+}) {
+  const { recipeList, detailContent, recipeDetail } = dom;
+  const {
+    formatDate,
+    escapeHtml,
+    normalizeDifficulty,
+    parseDurationText,
+    formatDuration,
+    getDisplayImageUrl,
+    getDirectImageUrl
+  } = helpers;
+
+  function patchRecipeCardImage(recipe) {
+    if (!recipe?.id || !recipe?._resolvedImageUrl) return;
+    const card = recipeList.querySelector(`article.recipe-card[data-id="${recipe.id}"]`);
+    if (!card) return;
+
+    const existingImage = card.querySelector("img");
+    if (existingImage) {
+      if (existingImage.src !== recipe._resolvedImageUrl) {
+        existingImage.src = recipe._resolvedImageUrl;
+      }
+      return;
+    }
+
+    const placeholder = card.querySelector(".recipe-card__image--placeholder");
+    if (!placeholder) return;
+
+    const image = document.createElement("img");
+    image.src = recipe._resolvedImageUrl;
+    image.alt = String(recipe.title ?? "Recipe image");
+    image.loading = "lazy";
+    placeholder.replaceWith(image);
+  }
+
+  function patchOpenDetailImage(recipe) {
+    if (!recipe?.id || !recipe?._resolvedImageUrl) return;
+    const openedDeleteButton = detailContent.querySelector("button[data-action='delete']");
+    if (openedDeleteButton?.dataset?.id !== recipe.id) return;
+
+    const existingImage = detailContent.querySelector(".recipe-detail-card img");
+    if (existingImage) {
+      if (existingImage.src !== recipe._resolvedImageUrl) {
+        existingImage.src = recipe._resolvedImageUrl;
+      }
+      return;
+    }
+
+    const placeholder = detailContent.querySelector(".recipe-detail-card__image--placeholder");
+    if (!placeholder) return;
+
+    const image = document.createElement("img");
+    image.src = recipe._resolvedImageUrl;
+    image.alt = String(recipe.title ?? "Recipe image");
+    placeholder.replaceWith(image);
+  }
+
+  async function hydrateImagesInBackground(items) {
+    await Promise.all(
+      items.map(async (item) => {
+        if (!item.image_url) return;
+        try {
+          const resolvedImageUrl = await getSignedImageUrl(item.image_url);
+          if (!resolvedImageUrl) return;
+          if (item._resolvedImageUrl === resolvedImageUrl) return;
+          item._resolvedImageUrl = resolvedImageUrl;
+          patchRecipeCardImage(item);
+          patchOpenDetailImage(item);
+        } catch (error) {
+          if (logSupabaseError) logSupabaseError("image hydration", error);
+        }
+      })
+    );
+  }
+
+  function renderList(query = "") {
+    try {
+      const safeQuery = String(query ?? "").toLowerCase();
+      const filtered = (Array.isArray(state.recipes) ? state.recipes : []).filter((item) =>
+        String(item?.title ?? "")
+          .toLowerCase()
+          .includes(safeQuery)
+      );
+
+      recipeList.replaceChildren();
+
+      if (!filtered.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = state.currentUser || !hasSupabaseConfig ? "No recipes found." : "Sign in to view your recipes.";
+        recipeList.appendChild(empty);
+      } else {
+        filtered.forEach((recipe) => {
+          const safeImageUrl = getDisplayImageUrl(recipe);
+          const title = String(recipe.title ?? "Untitled recipe");
+
+          const article = document.createElement("article");
+          article.className = "recipe-card";
+          article.dataset.id = recipe.id || "";
+
+          if (safeImageUrl) {
+            const image = document.createElement("img");
+            image.src = safeImageUrl;
+            image.alt = title;
+            image.loading = "lazy";
+            image.dataset.action = "view";
+            image.dataset.id = recipe.id || "";
+            article.appendChild(image);
+          } else {
+            const placeholder = document.createElement("div");
+            placeholder.className = "recipe-card__image recipe-card__image--placeholder";
+            placeholder.setAttribute("aria-hidden", "true");
+            placeholder.dataset.action = "view";
+            placeholder.dataset.id = recipe.id || "";
+            article.appendChild(placeholder);
+          }
+
+          const body = document.createElement("div");
+          body.className = "recipe-card__body";
+
+          const heading = document.createElement("h3");
+          heading.textContent = title;
+          heading.dataset.action = "view";
+          heading.dataset.id = recipe.id || "";
+          heading.classList.add("recipe-card__title-link");
+          body.appendChild(heading);
+
+          const dateText = document.createElement("p");
+          dateText.textContent = formatDate(recipe.created_at);
+          body.appendChild(dateText);
+
+          const prepTimeValue = String(recipe.prep_time ?? recipe.prepTime ?? "").trim();
+          const cookingTimeValue = String(recipe.cooking_time ?? recipe.cookingTime ?? "").trim();
+          const servesValue = String(recipe.serves ?? recipe.servings ?? "").trim();
+          const difficultyLevel = String(normalizeDifficulty(recipe.difficulty, 4));
+          const metaItems = [
+            { label: "Prep", value: prepTimeValue },
+            { label: "Cook", value: cookingTimeValue },
+            { label: "Serves", value: servesValue },
+            { label: "Difficulty", value: difficultyLevel }
+          ].filter((item) => Boolean(item.value));
+
+          if (metaItems.length) {
+            const meta = document.createElement("div");
+            meta.className = "recipe-card__meta";
+            metaItems.forEach((item) => {
+              const line = document.createElement("p");
+              line.className = "recipe-card__meta-item";
+              const label = document.createElement("strong");
+              label.textContent = `${item.label}:`;
+              line.appendChild(label);
+              line.append(` ${item.value}`);
+              meta.appendChild(line);
+            });
+            body.appendChild(meta);
+          }
+
+          const button = document.createElement("button");
+          button.className = "button";
+          button.type = "button";
+          button.dataset.action = "view";
+          button.dataset.id = recipe.id || "";
+          button.textContent = "View";
+          body.appendChild(button);
+
+          article.appendChild(body);
+          recipeList.appendChild(article);
+        });
+      }
+
+    } catch (error) {
+      recipeList.innerHTML = '<p class="empty">Could not render recipes.</p>';
+    }
+  }
+
+  function showDetail(recipe, options = {}) {
+    const { scrollToDetail = true } = options;
+    const renderDetail = (resolvedImageUrl) => {
+      const toMetaText = (value) => {
+        const text = value == null ? "" : String(value).trim();
+        return text ? escapeHtml(text) : "";
+      };
+      const prepTime = recipe.prep_time ?? recipe.prepTime ?? "";
+      const cookingTime = recipe.cooking_time ?? recipe.cookingTime ?? "";
+      const prepParsed = parseDurationText(prepTime);
+      const cookParsed = parseDurationText(cookingTime);
+      const prepMinutesTotal = Number(prepParsed.hours || 0) * 60 + Number(prepParsed.minutes || 0);
+      const cookMinutesTotal = Number(cookParsed.hours || 0) * 60 + Number(cookParsed.minutes || 0);
+      const computedTotalTime =
+        prepMinutesTotal > 0 || cookMinutesTotal > 0 ? formatDuration(prepMinutesTotal + cookMinutesTotal) : "";
+      const totalTime = recipe.total_time ?? recipe.totalTime ?? computedTotalTime;
+      const serves = recipe.serves ?? recipe.servings ?? "";
+      const difficulty = String(normalizeDifficulty(recipe.difficulty, 4));
+      const metaItems = [
+        { label: "Prep Time", value: toMetaText(prepTime), field: "prep_time", editable: true },
+        { label: "Cooking Time", value: toMetaText(cookingTime), field: "cooking_time", editable: true },
+        { label: "Total Time", value: toMetaText(totalTime) },
+        { label: "Serves", value: toMetaText(serves) },
+        { label: "Difficulty", value: toMetaText(difficulty), field: "difficulty", editable: true }
+      ].filter((item) => Boolean(item.value));
+      const renderMetaItem = (item) => {
+        if (item.editable && item.field) {
+          const ariaLabel = `Click to edit ${item.label.toLowerCase()}`;
+          return `<p class="recipe-detail-card__meta-item recipe-detail-card__meta-item--editable"><button class="inline-edit-trigger" data-action="inline-edit-field" data-field="${item.field}" type="button" aria-label="${ariaLabel}"><strong>${item.label}:</strong> <span data-field-content="${item.field}">${item.value}</span></button></p>`;
+        }
+        return `<p class="recipe-detail-card__meta-item"><strong>${item.label}:</strong> ${item.value}</p>`;
+      };
+      const metaHtml = metaItems.length
+        ? `
+        <div class="recipe-detail-card__meta" aria-label="Recipe timing and servings">
+          ${metaItems.map((item) => renderMetaItem(item)).join("")}
+        </div>`
+        : "";
+      const imageHtml = resolvedImageUrl
+        ? `<div class="recipe-detail-card__image-wrap" style="--detail-img: url('${escapeHtml(resolvedImageUrl)}')"><img src="${escapeHtml(resolvedImageUrl)}" alt="${escapeHtml(recipe.title)}" /></div>`
+        : '<div class="recipe-detail-card__image recipe-detail-card__image--placeholder" aria-hidden="true"></div>';
+
+      detailContent.innerHTML = `
+      <article class="recipe-detail-card">
+        ${imageHtml}
+        <div class="recipe-detail-card__header">
+          <h2>${escapeHtml(recipe.title)}</h2>
+          <p class="recipe-detail-card__date">Added ${formatDate(recipe.created_at)}</p>
+        </div>
+        ${metaHtml}
+
+        <section class="recipe-detail-card__section" data-field="ingredients">
+          <h3 class="recipe-detail-card__editable-title">
+            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="ingredients" type="button" aria-label="Click to edit ingredients">Ingredients</button>
+          </h3>
+          <button
+            class="inline-edit-trigger recipe-detail-card__editable"
+            data-action="inline-edit-field"
+            data-field="ingredients"
+            data-field-content="ingredients"
+            type="button"
+            aria-label="Click to edit ingredients"
+          >${escapeHtml(recipe.ingredients).replace(/\n/g, "<br />")}</button>
+        </section>
+
+        <section class="recipe-detail-card__section" data-field="method">
+          <h3 class="recipe-detail-card__editable-title">
+            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="method" type="button" aria-label="Click to edit method">Method</button>
+          </h3>
+          <button
+            class="inline-edit-trigger recipe-detail-card__editable"
+            data-action="inline-edit-field"
+            data-field="method"
+            data-field-content="method"
+            type="button"
+            aria-label="Click to edit method"
+          >${escapeHtml(recipe.method).replace(/\n/g, "<br />")}</button>
+        </section>
+
+        <button class="button button--secondary" type="button" data-action="edit" data-id="${recipe.id}">
+          Edit Recipe
+        </button>
+        <button class="button button--danger" type="button" data-action="delete" data-id="${recipe.id}">
+          Delete Recipe
+        </button>
+      </article>
+    `;
+    };
+
+    const immediateImageUrl = getDisplayImageUrl(recipe);
+    renderDetail(immediateImageUrl);
+    setDetailOpen(true);
+    if (scrollToDetail) {
+      recipeDetail.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    if (!immediateImageUrl && recipe.image_url) {
+      getSignedImageUrl(recipe.image_url)
+        .then((signedUrl) => {
+          if (!signedUrl) return;
+          recipe._resolvedImageUrl = signedUrl;
+          const current = state.recipes.find((item) => item.id === recipe.id);
+          if (current) {
+            current._resolvedImageUrl = signedUrl;
+          }
+
+          const openedDeleteButton = detailContent.querySelector("button[data-action='delete']");
+          const openedRecipeId = openedDeleteButton?.dataset?.id;
+          if (openedRecipeId === recipe.id) {
+            renderDetail(signedUrl);
+          }
+        })
+        .catch((error) => {
+          if (logSupabaseError) logSupabaseError("image hydration", error);
+        });
+    }
+  }
+
+  function normalizeLoadedRecipes(items, defaultDifficulty) {
+    return (items || []).map((item) => ({
+      ...item,
+      difficulty: normalizeDifficulty(item?.difficulty, defaultDifficulty),
+      _resolvedImageUrl: null
+    }));
+  }
+
+  return {
+    patchRecipeCardImage,
+    patchOpenDetailImage,
+    hydrateImagesInBackground,
+    renderList,
+    showDetail,
+    normalizeLoadedRecipes
+  };
+}
+
+window.StorecipeRecipeRenderer = {
+  createRecipeRenderer
+};
