@@ -842,15 +842,65 @@
     await loadRecipes();
   }
 
+  function isEmailNotConfirmedError(error) {
+    const msg = String(error?.message || "").toLowerCase();
+    return msg.includes("email not confirmed") || msg.includes("email_not_confirmed");
+  }
+
+  async function resendConfirmation(email) {
+    setAuthLoading(true, "Resending confirmation...");
+    try {
+      const siteUrl = window.location.origin;
+      const { error } = await client.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${siteUrl}/confirm.html` }
+      });
+      if (error) {
+        setAppStatus(`Could not resend: ${error.message}`);
+      } else {
+        setAppStatus("Confirmation email sent! Check your inbox.");
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  function showEmailNotConfirmedUi(email) {
+    setAuthStatus("Your email address has not been confirmed yet.");
+    setAppStatus("");
+    const existing = document.getElementById("resendConfirmRow");
+    if (existing) existing.remove();
+
+    const row = document.createElement("div");
+    row.id = "resendConfirmRow";
+    row.className = "auth-confirm-prompt";
+    row.innerHTML = `
+      <p>Check your inbox for a confirmation link, or request a new one.</p>
+      <button id="resendConfirmButton" class="button button--secondary" type="button">Resend confirmation email</button>
+    `;
+    authForm.appendChild(row);
+
+    document.getElementById("resendConfirmButton").addEventListener("click", () => {
+      resendConfirmation(email);
+    });
+  }
+
   async function signIn(email, password) {
     setAuthLoading(true, "Signing in...");
     try {
       const { error } = await client.auth.signInWithPassword({ email, password });
       if (error) {
+        if (isEmailNotConfirmedError(error)) {
+          showEmailNotConfirmedUi(email);
+          return;
+        }
         setAuthStatus(`Sign-in failed: ${error.message}`);
         setAppStatus(`Sign-in failed: ${error.message}`);
         return;
       }
+      const existing = document.getElementById("resendConfirmRow");
+      if (existing) existing.remove();
       setAppStatus("Signed in.");
     } finally {
       setAuthLoading(false);

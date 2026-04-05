@@ -850,6 +850,20 @@ button:active:not(:disabled) {
   }
 }
 
+.auth-confirm-prompt {
+  margin-top: $space-sm;
+  padding: $space-sm;
+  border-radius: 10px;
+  background: rgba(51, 78, 104, 0.06);
+  text-align: center;
+
+  p {
+    margin: 0 0 0.5rem;
+    color: $muted;
+    font-size: 0.9rem;
+  }
+}
+
 .confirm-page {
   display: flex;
   align-items: center;
