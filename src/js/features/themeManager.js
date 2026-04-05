@@ -51,7 +51,9 @@
         return;
       }
 
-      const localTheme = normalizeTheme(window.localStorage.getItem(getThemeStorageKey(state.currentUser.id)));
+      const userLocalTheme = window.localStorage.getItem(getThemeStorageKey(state.currentUser.id));
+      const anonTheme = window.localStorage.getItem(ANONYMOUS_THEME_KEY);
+      const localTheme = normalizeTheme(userLocalTheme || anonTheme);
       setTheme(localTheme, { persistForCurrentUser: false });
 
       if (!hasSupabaseConfig || !state.isThemePreferenceAvailable) {
