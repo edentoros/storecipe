@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Storecipe - Confirm your email</title>
+    <link rel="stylesheet" href="dist/style.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="src/js/core/config.js" onerror="this.remove()"></script>
+    <script defer src="src/js/core/constants.js"></script>
+  </head>
+  <body>
+    <main class="app confirm-page">
+      <div class="confirm-card">
+        <h1>Storecipe</h1>
+        <div id="confirmPending">
+          <h2>Check your email</h2>
+          <p>We've sent a confirmation link to your email address. Click the link to activate your account.</p>
+          <p class="confirm-card__hint">Didn't receive it? Check your spam folder or try signing up again.</p>
+        </div>
+        <div id="confirmSuccess" class="hidden">
+          <h2>Email confirmed!</h2>
+          <p>Your account is ready. Redirecting you now...</p>
+        </div>
+        <div id="confirmError" class="hidden">
+          <h2>Something went wrong</h2>
+          <p id="confirmErrorMessage">Could not verify your email. Please try again.</p>
+        </div>
+        <a href="index.html" class="button confirm-card__button">Back to Storecipe</a>
+      </div>
+    </main>
+
+    <script defer>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const pendingEl = document.getElementById("confirmPending");
+        const successEl = document.getElementById("confirmSuccess");
+        const errorEl = document.getElementById("confirmError");
+        const errorMsgEl = document.getElementById("confirmErrorMessage");
+
+        const hash = window.location.hash;
+        if (!hash || !hash.includes("access_token")) return;
+
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+        const errorDescription = params.get("error_description");
+
+        if (errorDescription) {
+          pendingEl.classList.add("hidden");
+          errorEl.classList.remove("hidden");
+          errorMsgEl.textContent = decodeURIComponent(errorDescription);
+          return;
+        }
+
+        if (!accessToken) return;
+
+        try {
+          const config = window.StorecipeConfig || {};
+          const url = config.SUPABASE_URL;
+          const key = config.SUPABASE_PUBLISHABLE_KEY;
+
+          if (!url || !key || url.includes("YOUR_PROJECT_ID")) {
+            throw new Error("Supabase is not configured.");
+          }
+
+          const client = window.supabase.createClient(url, key);
+          const { error } = await client.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (error) throw error;
+
+          pendingEl.classList.add("hidden");
+          successEl.classList.remove("hidden");
+
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 1500);
+        } catch (err) {
+          pendingEl.classList.add("hidden");
+          errorEl.classList.remove("hidden");
+          errorMsgEl.textContent = err.message || "Could not verify your email. Please try again.";
+        }
+      });
+    </script>
+  </body>
+</html>

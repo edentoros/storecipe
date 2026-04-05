@@ -73,6 +73,9 @@
     themeToggleButton,
     signedInEmail,
     signOutButton,
+    authConfirmPassword,
+    authConfirmPasswordLabel,
+    passwordRequirements,
     authEmailLabel,
     authPasswordLabel,
     recipeForm,
@@ -855,19 +858,85 @@
     }
   }
 
+  let isSignUpMode = false;
+
+  function getPasswordErrors(password) {
+    const errors = [];
+    if (password.length < 8) errors.push("At least 8 characters");
+    if (!/[A-Z]/.test(password)) errors.push("One uppercase letter");
+    if (!/[a-z]/.test(password)) errors.push("One lowercase letter");
+    if (!/[0-9]/.test(password)) errors.push("One number");
+    return errors;
+  }
+
+  function updatePasswordRequirementsUi() {
+    if (!passwordRequirements || !isSignUpMode) return;
+    const password = authPassword.value;
+    const confirmPassword = authConfirmPassword ? authConfirmPassword.value : "";
+    const errors = getPasswordErrors(password);
+    const mismatch = password && confirmPassword && password !== confirmPassword;
+
+    const items = [
+      { text: "At least 8 characters", ok: password.length >= 8 },
+      { text: "One uppercase letter", ok: /[A-Z]/.test(password) },
+      { text: "One lowercase letter", ok: /[a-z]/.test(password) },
+      { text: "One number", ok: /[0-9]/.test(password) }
+    ];
+
+    if (confirmPassword) {
+      items.push({ text: "Passwords match", ok: password === confirmPassword });
+    }
+
+    passwordRequirements.innerHTML = items
+      .map((item) => `<span class="password-req ${item.ok ? "password-req--pass" : "password-req--fail"}">${item.ok ? "\u2713" : "\u2717"} ${item.text}</span>`)
+      .join("");
+  }
+
+  function setSignUpMode(enabled) {
+    isSignUpMode = enabled;
+    if (authConfirmPassword) {
+      authConfirmPassword.classList.toggle("hidden", !enabled);
+      authConfirmPassword.required = enabled;
+      if (!enabled) authConfirmPassword.value = "";
+    }
+    if (authConfirmPasswordLabel) {
+      authConfirmPasswordLabel.classList.toggle("hidden", !enabled);
+    }
+    if (passwordRequirements) {
+      passwordRequirements.classList.toggle("hidden", !enabled);
+      if (!enabled) passwordRequirements.innerHTML = "";
+    }
+    if (signInButton) {
+      signInButton.classList.toggle("hidden", enabled);
+    }
+    if (signUpButton) {
+      signUpButton.textContent = enabled ? "Create Account" : "Sign Up";
+    }
+    if (authPassword) {
+      authPassword.autocomplete = enabled ? "new-password" : "current-password";
+    }
+    if (enabled) {
+      updatePasswordRequirementsUi();
+    }
+  }
+
   async function signUp(email, password) {
     setAuthLoading(true, "Creating account...");
     try {
-      const { error } = await client.auth.signUp({ email, password });
+      const siteUrl = window.location.origin;
+      const { error } = await client.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${siteUrl}/confirm.html` }
+      });
       if (error) {
         setAuthStatus(`Sign-up failed: ${error.message}`);
         setAppStatus(`Sign-up failed: ${error.message}`);
         return;
       }
-      setAppStatus("Sign-up successful. Check your email if confirmation is enabled.");
+      window.location.href = "confirm.html";
     } finally {
       setAuthLoading(false);
-      setAuthUi();
     }
   }
 
@@ -931,6 +1000,11 @@
     event.preventDefault();
     if (!hasSupabaseConfig) return;
 
+    if (isSignUpMode) {
+      setSignUpMode(false);
+      setAuthStatus(SIGNED_OUT_PROMPT);
+    }
+
     const email = authEmail.value.trim();
     const password = authPassword.value;
     if (!email || !password) return;
@@ -939,17 +1013,46 @@
 
   signUpButton.addEventListener("click", async () => {
     if (!hasSupabaseConfig) return;
-    if (!authForm.reportValidity()) {
+
+    if (!isSignUpMode) {
+      setSignUpMode(true);
+      setAuthStatus("Create a new account.");
+      if (authPassword) authPassword.focus();
       return;
     }
+
+    if (!authForm.reportValidity()) return;
+
     const email = authEmail.value.trim();
     const password = authPassword.value;
+    const confirmPassword = authConfirmPassword ? authConfirmPassword.value : "";
+
     if (!email || !password) {
       setAppStatus("Enter email and password to sign up.");
       return;
     }
+
+    const passwordErrors = getPasswordErrors(password);
+    if (passwordErrors.length > 0) {
+      setAppStatus(`Password must have: ${passwordErrors.join(", ").toLowerCase()}.`);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setAppStatus("Passwords do not match.");
+      if (authConfirmPassword) authConfirmPassword.focus();
+      return;
+    }
+
     await signUp(email, password);
   });
+
+  if (authPassword) {
+    authPassword.addEventListener("input", updatePasswordRequirementsUi);
+  }
+  if (authConfirmPassword) {
+    authConfirmPassword.addEventListener("input", updatePasswordRequirementsUi);
+  }
 
   signOutButton.addEventListener("click", async () => {
     if (!hasSupabaseConfig) return;

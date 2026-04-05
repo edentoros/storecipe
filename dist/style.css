@@ -701,6 +701,58 @@ button:active:not(:disabled) {
   white-space: inherit;
   word-break: inherit;
 }
+.password-requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.82rem;
+}
+.password-req {
+  white-space: nowrap;
+}
+.password-req--pass {
+  color: #2e7d32;
+}
+.password-req--fail {
+  color: #9e2a2b;
+}
+.confirm-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+.confirm-card {
+  background: #fffdf9;
+  border-radius: 14px;
+  padding: 2rem;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 10px 24px rgba(20, 31, 43, 0.07);
+  text-align: center;
+}
+.confirm-card h1 {
+  margin-top: 0;
+  color: #1f2933;
+}
+.confirm-card h2 {
+  margin-top: 0.5rem;
+}
+.confirm-card p {
+  color: #52606d;
+  line-height: 1.5;
+}
+.confirm-card__hint {
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+.confirm-card__button {
+  display: inline-block;
+  margin-top: 1.5rem;
+  text-decoration: none;
+}
 .sr-only {
   position: absolute;
   width: 1px;

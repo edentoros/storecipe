@@ -58,6 +58,18 @@
             required
           />
 
+          <label for="authConfirmPassword" class="hidden">Confirm Password</label>
+          <input
+            id="authConfirmPassword"
+            name="confirmPassword"
+            type="password"
+            autocomplete="new-password"
+            minlength="8"
+            class="hidden"
+            placeholder="Confirm password"
+          />
+          <div id="passwordRequirements" class="password-requirements hidden" aria-live="polite"></div>
+
           <div class="auth-actions">
             <button id="signInButton" class="button" type="submit">Sign In</button>
             <button id="signUpButton" class="button button--secondary" type="button">Sign Up</button>
