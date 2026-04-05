@@ -1563,7 +1563,7 @@
       if (durationDigitInputs.length) {
         getRecipeMetaFromFormData(new FormData(recipeForm), { showStatus: false });
       }
-      setTheme(DEFAULT_THEME, { persistForCurrentUser: false });
+      await loadThemePreference();
       loadImportPrompt();
       updateImportButtonUi();
 

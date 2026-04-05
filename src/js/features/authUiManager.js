@@ -131,7 +131,7 @@
         signedInEmail.textContent = isSignedIn ? String(state.currentUser?.email || "") : "";
       }
       if (themeToggleButton) {
-        themeToggleButton.classList.toggle("hidden", !isSignedIn);
+        themeToggleButton.classList.remove("hidden");
       }
       if (authStatusEl) {
         authStatusEl.classList.toggle("hidden", isSignedIn);
@@ -175,7 +175,7 @@
         signOutButton.disabled = !isSignedIn || state.isAuthLoading;
       }
       if (themeToggleButton) {
-        themeToggleButton.disabled = !isSignedIn || state.isAuthLoading;
+        themeToggleButton.disabled = false;
         updateThemeToggleUi();
       }
       if (authLoadingEl) {
@@ -198,7 +198,6 @@
         signUpButton.classList.add("hidden");
         if (settingsButton) settingsButton.classList.add("hidden");
         if (closeSettingsButton) closeSettingsButton.classList.add("hidden");
-        if (themeToggleButton) themeToggleButton.classList.add("hidden");
         if (signedInEmail) {
           signedInEmail.classList.add("hidden");
           signedInEmail.textContent = "";

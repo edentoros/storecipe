@@ -16,6 +16,8 @@
       themeToggleButton.setAttribute("aria-pressed", isDarkTheme ? "true" : "false");
     }
 
+    const ANONYMOUS_THEME_KEY = `${THEME_LOCAL_KEY_PREFIX}anonymous`;
+
     function setTheme(theme, options = {}) {
       const { persistForCurrentUser = true } = options;
       const normalizedTheme = normalizeTheme(theme);
@@ -23,8 +25,11 @@
       document.body.classList.toggle("theme-dark", normalizedTheme === "dark");
       updateThemeToggleUi();
 
-      if (persistForCurrentUser && state.currentUser?.id) {
-        window.localStorage.setItem(getThemeStorageKey(state.currentUser.id), normalizedTheme);
+      if (persistForCurrentUser) {
+        const key = state.currentUser?.id
+          ? getThemeStorageKey(state.currentUser.id)
+          : ANONYMOUS_THEME_KEY;
+        window.localStorage.setItem(key, normalizedTheme);
       }
     }
 
@@ -41,7 +46,8 @@
 
     async function loadThemePreference() {
       if (!state.currentUser) {
-        setTheme(DEFAULT_THEME, { persistForCurrentUser: false });
+        const anonTheme = window.localStorage.getItem(ANONYMOUS_THEME_KEY);
+        setTheme(anonTheme ? normalizeTheme(anonTheme) : DEFAULT_THEME, { persistForCurrentUser: false });
         return;
       }
 
