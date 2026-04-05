@@ -8,7 +8,7 @@
     const { resetRecipeFormState, resetRecipeListLoadingState } = callbacks;
 
     function isRecipeUiAvailable() {
-      return !hasSupabaseConfig || Boolean(state.currentUser);
+      return Boolean(state.currentUser);
     }
 
     function getClosedAddLabel() {

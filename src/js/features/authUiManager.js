@@ -188,24 +188,22 @@
       }
 
       if (!hasSupabaseConfig) {
-        setAuthStatus("Demo mode (local data only)");
-        setAppStatus("Demo mode (local data only)");
-        if (settingsButton) {
-          settingsButton.classList.add("hidden");
-        }
-        if (closeSettingsButton) {
-          closeSettingsButton.classList.add("hidden");
-        }
-        if (themeToggleButton) {
-          themeToggleButton.classList.add("hidden");
-        }
+        setAuthStatus("Sign in is not available.");
+        setAppStatus("");
+        if (authEmail) authEmail.classList.add("hidden");
+        if (authPassword) authPassword.classList.add("hidden");
+        if (authEmailLabel) authEmailLabel.classList.add("hidden");
+        if (authPasswordLabel) authPasswordLabel.classList.add("hidden");
+        if (signInButton) signInButton.classList.add("hidden");
+        signUpButton.classList.add("hidden");
+        if (settingsButton) settingsButton.classList.add("hidden");
+        if (closeSettingsButton) closeSettingsButton.classList.add("hidden");
+        if (themeToggleButton) themeToggleButton.classList.add("hidden");
         if (signedInEmail) {
           signedInEmail.classList.add("hidden");
           signedInEmail.textContent = "";
         }
-        if (settingsBackdrop) {
-          settingsBackdrop.classList.add("hidden");
-        }
+        if (settingsBackdrop) settingsBackdrop.classList.add("hidden");
         if (authPanel) {
           authPanel.classList.remove("hidden");
           authPanel.classList.remove("panel--auth-modal");

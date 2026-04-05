@@ -510,15 +510,7 @@
   async function loadRecipes() {
     beginRecipeListLoad();
     try {
-      if (!hasSupabaseConfig) {
-        state.recipes = getLocalRecipes()
-          .map((item) => ({ ...item, difficulty: normalizeDifficulty(item?.difficulty) }))
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        renderList(searchInput.value.trim().toLowerCase());
-        return;
-      }
-
-      if (!state.currentUser) {
+      if (!hasSupabaseConfig || !state.currentUser) {
         state.recipes = [];
         renderList(searchInput.value.trim().toLowerCase());
         return;
@@ -1424,8 +1416,7 @@
 
       if (!hasSupabaseConfig) {
         setAuthUi();
-        setRecipeUiEnabled(true);
-        await loadRecipes();
+        setRecipeUiEnabled(false);
         return;
       }
 
