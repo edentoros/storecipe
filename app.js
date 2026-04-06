@@ -134,6 +134,7 @@
   const normalizeDifficulty = (value) => normalizeDifficultyCore(value, DEFAULT_DIFFICULTY);
   const normalizeStoragePath = (value) => normalizeStoragePathCore(value, BUCKET);
   const SIGNED_OUT_PROMPT = "Sign into your account or create new account.";
+  const DRAFT_LOCAL_KEY = "storecipe_recipe_draft";
   const supabaseServices = createSupabaseServices({
     config: {
       SUPABASE_URL,
@@ -392,6 +393,7 @@
     setAddRecipeOpen(true);
     void refreshEditImageTools(recipe);
     setAppStatus("Editing recipe. Update fields and click Update Recipe.");
+    saveDraft();
   }
 
   function resetRecipeFormState() {
@@ -400,6 +402,82 @@
     recipeMetaManager.resetValidationUi();
     setRecipeFormMode(null);
     hideEditImageTools();
+    clearDraft();
+  }
+
+  function saveDraft() {
+    if (addRecipeSection.classList.contains("hidden")) return;
+    try {
+      const draft = {
+        editingRecipeId: state.editingRecipeId || null,
+        title: recipeForm.elements.title?.value || "",
+        ingredients: recipeForm.elements.ingredients?.value || "",
+        method: recipeForm.elements.method?.value || "",
+        prepHours: prepHoursInput?.value || "",
+        prepMinutes: prepMinutesInput?.value || "",
+        cookHours: cookHoursInput?.value || "",
+        cookMinutes: cookMinutesInput?.value || "",
+        serves: recipeForm.elements.serves?.value || "",
+        difficulty: difficultyInput?.value || "",
+        imageUrl: imageUrlInput?.value || "",
+        savedAt: Date.now()
+      };
+      window.localStorage.setItem(DRAFT_LOCAL_KEY, JSON.stringify(draft));
+    } catch (_) { /* localStorage full or unavailable */ }
+  }
+
+  const saveDraftDebounced = debounce(saveDraft, 500);
+
+  function clearDraft() {
+    try { window.localStorage.removeItem(DRAFT_LOCAL_KEY); } catch (_) {}
+  }
+
+  function loadDraft() {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_LOCAL_KEY);
+      if (!raw) return null;
+      const draft = JSON.parse(raw);
+      if (!draft || typeof draft !== "object") return null;
+      const maxAge = 7 * 24 * 60 * 60 * 1000;
+      if (draft.savedAt && Date.now() - draft.savedAt > maxAge) {
+        clearDraft();
+        return null;
+      }
+      return draft;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function restoreDraft(draft) {
+    if (!draft) return false;
+    if (draft.editingRecipeId) {
+      const recipe = state.recipes.find((r) => r.id === draft.editingRecipeId);
+      if (!recipe) {
+        clearDraft();
+        return false;
+      }
+      startEditRecipe(recipe);
+    } else {
+      setRecipeFormMode(null);
+    }
+    if (recipeForm.elements.title) recipeForm.elements.title.value = draft.title || "";
+    if (recipeForm.elements.ingredients) recipeForm.elements.ingredients.value = draft.ingredients || "";
+    if (recipeForm.elements.method) recipeForm.elements.method.value = draft.method || "";
+    if (prepHoursInput) prepHoursInput.value = draft.prepHours || "";
+    if (prepMinutesInput) prepMinutesInput.value = draft.prepMinutes || "";
+    if (cookHoursInput) cookHoursInput.value = draft.cookHours || "";
+    if (cookMinutesInput) cookMinutesInput.value = draft.cookMinutes || "";
+    if (recipeForm.elements.serves) recipeForm.elements.serves.value = draft.serves || "";
+    if (difficultyInput) {
+      difficultyInput.value = draft.difficulty || String(DEFAULT_DIFFICULTY);
+      syncDifficultyUi();
+    }
+    if (imageUrlInput && draft.imageUrl) imageUrlInput.value = draft.imageUrl;
+    getRecipeMetaFromFormData(new FormData(recipeForm), { showStatus: false });
+    setAddRecipeOpen(true);
+    setAppStatus("Draft restored. Continue editing or cancel to discard.");
+    return true;
   }
 
   const hasCoreUi =
@@ -1249,6 +1327,9 @@
     true
   );
 
+  recipeForm.addEventListener("input", saveDraftDebounced);
+  recipeForm.addEventListener("change", saveDraftDebounced);
+
   if (saveRecipeButton) {
     saveRecipeButton.addEventListener("click", () => {
       const hasInlineMetaWarning = Boolean(
@@ -1554,6 +1635,11 @@
       authEvent === "SESSION_SYNC"
     ) {
       await loadRecipes();
+
+      const draft = loadDraft();
+      if (draft && state.currentUser) {
+        restoreDraft(draft);
+      }
     }
   }
 
