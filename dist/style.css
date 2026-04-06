@@ -85,6 +85,14 @@ body {
 .auth-status {
   margin: 0;
   color: #52606d;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+.auth-status--error {
+  background-color: #fdecea;
+  color: #611a15;
+  border: 1px solid #f5c6cb;
 }
 .auth-actions {
   display: flex;
@@ -802,6 +810,11 @@ body.theme-dark .recipe-card .recipe-card__body p,
 body.theme-dark .recipe-detail-card .recipe-detail-card__date,
 body.theme-dark .recipe-detail-card .recipe-detail-card__meta p {
   color: #9fb3c8;
+}
+body.theme-dark .auth-status--error {
+  background-color: #4a1c1c;
+  color: #f5a8a8;
+  border-color: #6b2e2e;
 }
 body.theme-dark .recipe-card .recipe-card__body .recipe-card__meta-item strong {
   color: #e4edf6;

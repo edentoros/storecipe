@@ -117,6 +117,15 @@ body {
 .auth-status {
   margin: 0;
   color: $muted;
+  padding: $space-xs $space-sm;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+
+  &--error {
+    background-color: #fdecea;
+    color: #611a15;
+    border: 1px solid #f5c6cb;
+  }
 }
 
 .auth-actions {
@@ -960,6 +969,12 @@ body.theme-dark {
   .recipe-detail-card .recipe-detail-card__date,
   .recipe-detail-card .recipe-detail-card__meta p {
     color: #9fb3c8;
+  }
+
+  .auth-status--error {
+    background-color: #4a1c1c;
+    color: #f5a8a8;
+    border-color: #6b2e2e;
   }
 
   .recipe-card .recipe-card__body .recipe-card__meta-item strong {

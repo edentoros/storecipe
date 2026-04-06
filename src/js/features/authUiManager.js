@@ -30,6 +30,7 @@
       pendingAuthError = isError;
       if (authStatusEl) {
         authStatusEl.textContent = message;
+        authStatusEl.classList.toggle("auth-status--error", isError);
       }
     }
 

@@ -980,7 +980,7 @@
         options: { emailRedirectTo: `${siteUrl}/confirm.html` }
       });
       if (error) {
-        setAuthStatus(`Sign-up failed: ${error.message}`);
+        setAuthStatus(`Sign-up failed: ${error.message}`, { isError: true });
         setAppStatus(`Sign-up failed: ${error.message}`);
         return;
       }
