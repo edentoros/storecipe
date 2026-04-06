@@ -895,7 +895,7 @@
           showEmailNotConfirmedUi(email);
           return;
         }
-        setAuthStatus(`Sign-in failed: ${error.message}`);
+        setAuthStatus(`Sign-in failed: ${error.message}`, { isError: true });
         setAppStatus(`Sign-in failed: ${error.message}`);
         return;
       }
@@ -995,7 +995,7 @@
     try {
       const { error } = await client.auth.signOut();
       if (error) {
-        setAuthStatus(`Sign-out failed: ${error.message}`);
+        setAuthStatus(`Sign-out failed: ${error.message}`, { isError: true });
         setAppStatus(`Sign-out failed: ${error.message}`);
         return;
       }

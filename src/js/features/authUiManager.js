@@ -24,7 +24,10 @@
     const { hasSupabaseConfig, SIGNED_OUT_PROMPT } = config;
     const { setSettingsOpen, updateThemeToggleUi } = callbacks;
 
-    function setAuthStatus(message) {
+    let pendingAuthError = false;
+
+    function setAuthStatus(message, { isError = false } = {}) {
+      pendingAuthError = isError;
       if (authStatusEl) {
         authStatusEl.textContent = message;
       }
@@ -210,7 +213,11 @@
         return;
       }
 
-      setAuthStatus(isSignedIn ? `Signed in as ${state.currentUser.email}` : SIGNED_OUT_PROMPT);
+      if (pendingAuthError) {
+        pendingAuthError = false;
+      } else {
+        setAuthStatus(isSignedIn ? `Signed in as ${state.currentUser.email}` : SIGNED_OUT_PROMPT);
+      }
       if (!isSignedIn) {
         setAppStatus("");
       }
