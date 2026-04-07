@@ -22,7 +22,11 @@
       recipeListLoaderTimerId: null,
       hasCompletedInitialAuthBootstrap: false,
       isThemePreferenceAvailable: true,
-      hasRecipeMetaColumns: true
+      hasRecipeMetaColumns: true,
+      hasCategoryFavColumns: true,
+      activeCategory: "",
+      showFavouritesOnly: false,
+      sortBy: "created_at_desc"
     };
   }
 

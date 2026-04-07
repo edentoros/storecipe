@@ -91,6 +91,27 @@
       <section class="panel panel--search">
         <label for="searchInput">Search Recipes</label>
         <input id="searchInput" type="text" placeholder="Search by title..." />
+        <div class="search-filters">
+          <select id="categoryFilter" aria-label="Filter by category">
+            <option value="">All categories</option>
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="snack">Snack</option>
+            <option value="dessert">Dessert</option>
+            <option value="drinks">Drinks</option>
+            <option value="other">Other</option>
+          </select>
+          <button id="favouritesFilter" class="button button--ghost" type="button" aria-pressed="false" title="Show favourites only">&#9825; Favourites</button>
+          <select id="sortSelect" aria-label="Sort recipes">
+            <option value="created_at_desc">Newest first</option>
+            <option value="created_at_asc">Oldest first</option>
+            <option value="title_asc">Name (A–Z)</option>
+            <option value="title_desc">Name (Z–A)</option>
+            <option value="difficulty_asc">Easiest first</option>
+            <option value="difficulty_desc">Hardest first</option>
+          </select>
+        </div>
       </section>
 
       <section class="panel panel--list">
@@ -132,6 +153,18 @@
         <form id="recipeForm">
           <label for="title">Title</label>
           <input id="title" name="title" type="text" required />
+
+          <label for="category">Category</label>
+          <select id="category" name="category">
+            <option value="">None</option>
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="snack">Snack</option>
+            <option value="dessert">Dessert</option>
+            <option value="drinks">Drinks</option>
+            <option value="other">Other</option>
+          </select>
 
           <label for="recipeImportUrl" class="sr-only">Import from recipe link</label>
           <div class="recipe-import-tools hidden">

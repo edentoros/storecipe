@@ -325,7 +325,7 @@
         const updatedLocalRecipe = { ...recipe, ...payload };
         state.recipes = state.recipes.map((item) => (item.id === recipe.id ? updatedLocalRecipe : item));
         saveLocalRecipes(state.recipes);
-        renderList(searchInput.value.trim().toLowerCase());
+        renderList();
         showDetail(updatedLocalRecipe, { scrollToDetail: false });
         setAppStatus(`${label.charAt(0).toUpperCase()}${label.slice(1)} updated.`);
         return true;
@@ -349,7 +349,7 @@
           _resolvedImageUrl: recipe._resolvedImageUrl || getDirectImageUrl(updatedRecipe.image_url)
         };
         state.recipes = state.recipes.map((item) => (item.id === recipe.id ? hydratedUpdatedRecipe : item));
-        renderList(searchInput.value.trim().toLowerCase());
+        renderList();
         showDetail(hydratedUpdatedRecipe, { scrollToDetail: false });
         setAppStatus(`${label.charAt(0).toUpperCase()}${label.slice(1)} updated.`);
         return true;

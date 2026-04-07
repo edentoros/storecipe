@@ -81,14 +81,48 @@ function createRecipeRenderer({
     );
   }
 
-  function renderList(query = "") {
+  function durationToMinutes(durationText) {
+    const parsed = parseDurationText(String(durationText ?? ""));
+    return Number(parsed.hours || 0) * 60 + Number(parsed.minutes || 0);
+  }
+
+  function capitalize(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function sortRecipes(items, sortBy) {
+    const [sortField, sortDir] = (sortBy || "created_at_desc").split(/_(?=asc$|desc$)/);
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...items].sort((a, b) => {
+      if (sortField === "title") {
+        return dir * String(a.title || "").toLowerCase().localeCompare(String(b.title || "").toLowerCase());
+      }
+      if (sortField === "difficulty") {
+        return dir * ((Number(a.difficulty) || 0) - (Number(b.difficulty) || 0));
+      }
+      const aVal = new Date(a.created_at || 0).getTime();
+      const bVal = new Date(b.created_at || 0).getTime();
+      return dir * (aVal - bVal);
+    });
+  }
+
+  function renderList(query = "", { category = "", favouritesOnly = false, sortBy = "created_at_desc" } = {}) {
     try {
       const safeQuery = String(query ?? "").toLowerCase();
-      const filtered = (Array.isArray(state.recipes) ? state.recipes : []).filter((item) =>
+      let filtered = (Array.isArray(state.recipes) ? state.recipes : []).filter((item) =>
         String(item?.title ?? "")
           .toLowerCase()
           .includes(safeQuery)
       );
+
+      if (category) {
+        filtered = filtered.filter((item) => (item.category || "") === category);
+      }
+      if (favouritesOnly) {
+        filtered = filtered.filter((item) => item.is_favourite);
+      }
+      filtered = sortRecipes(filtered, sortBy);
 
       recipeList.replaceChildren();
 
@@ -105,6 +139,15 @@ function createRecipeRenderer({
           const article = document.createElement("article");
           article.className = "recipe-card";
           article.dataset.id = recipe.id || "";
+
+          const favButton = document.createElement("button");
+          favButton.className = "recipe-card__fav-button" + (recipe.is_favourite ? " recipe-card__fav-button--active" : "");
+          favButton.type = "button";
+          favButton.dataset.action = "toggle-fav";
+          favButton.dataset.id = recipe.id || "";
+          favButton.setAttribute("aria-label", recipe.is_favourite ? "Remove from favourites" : "Add to favourites");
+          favButton.innerHTML = recipe.is_favourite ? "&#9829;" : "&#9825;";
+          article.appendChild(favButton);
 
           if (safeImageUrl) {
             const image = document.createElement("img");
@@ -136,6 +179,13 @@ function createRecipeRenderer({
           const dateText = document.createElement("p");
           dateText.textContent = formatDate(recipe.created_at);
           body.appendChild(dateText);
+
+          if (recipe.category) {
+            const badge = document.createElement("span");
+            badge.className = "recipe-card__category-badge";
+            badge.textContent = capitalize(recipe.category);
+            body.appendChild(badge);
+          }
 
           const prepTimeValue = String(recipe.prep_time ?? recipe.prepTime ?? "").trim();
           const cookingTimeValue = String(recipe.cooking_time ?? recipe.cookingTime ?? "").trim();
@@ -223,12 +273,23 @@ function createRecipeRenderer({
         ? `<div class="recipe-detail-card__image-wrap" style="--detail-img: url('${escapeHtml(resolvedImageUrl)}')"><img src="${escapeHtml(resolvedImageUrl)}" alt="${escapeHtml(recipe.title)}" /></div>`
         : '<div class="recipe-detail-card__image recipe-detail-card__image--placeholder" aria-hidden="true"></div>';
 
+      const categoryHtml = recipe.category
+        ? `<span class="recipe-detail-card__category-badge">${escapeHtml(capitalize(recipe.category))}</span>`
+        : "";
+      const favActive = recipe.is_favourite;
+      const favHeart = favActive ? "&#9829;" : "&#9825;";
+      const favLabel = favActive ? "Remove from favourites" : "Add to favourites";
+      const favClass = "recipe-detail-card__fav-button" + (favActive ? " recipe-detail-card__fav-button--active" : "");
+
       detailContent.innerHTML = `
       <article class="recipe-detail-card">
         ${imageHtml}
         <div class="recipe-detail-card__header">
-          <h2>${escapeHtml(recipe.title)}</h2>
-          <p class="recipe-detail-card__date">Added ${formatDate(recipe.created_at)}</p>
+          <div class="recipe-detail-card__title-row">
+            <h2>${escapeHtml(recipe.title)}</h2>
+            <button class="${favClass}" type="button" data-action="toggle-fav" data-id="${recipe.id}" aria-label="${favLabel}">${favHeart}</button>
+          </div>
+          <p class="recipe-detail-card__date">Added ${formatDate(recipe.created_at)} ${categoryHtml}</p>
         </div>
         ${metaHtml}
 

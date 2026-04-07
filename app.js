@@ -18,7 +18,8 @@
     RECIPE_IMPORT_FUNCTION,
     RECIPE_IMPORT_PROMPT_LOCAL_KEY_PREFIX,
     RECIPE_IMPORT_PROMPT_DEFAULT_KEY,
-    DEFAULT_RECIPE_IMPORT_PROMPT
+    DEFAULT_RECIPE_IMPORT_PROMPT,
+    RECIPE_CATEGORIES
   } = window.StorecipeConstants;
   const { getDomRefs } = window.StorecipeDomRefs;
   const {
@@ -83,6 +84,9 @@
     recipeListLoading,
     recipeList,
     searchInput,
+    categoryFilter,
+    favouritesFilter,
+    sortSelect,
     searchPanel,
     listPanel,
     addRecipeSection,
@@ -360,6 +364,9 @@
     state.pendingImageUrl = "";
     setRecipeFormMode(recipe);
     recipeForm.elements.title.value = recipe.title || "";
+    if (recipeForm.elements.category) {
+      recipeForm.elements.category.value = recipe.category || "";
+    }
     recipeForm.elements.ingredients.value = recipe.ingredients || "";
     recipeForm.elements.method.value = recipe.method || "";
     const prepParsed = parseDurationText(recipe.prep_time ?? recipe.prepTime ?? "");
@@ -418,6 +425,7 @@
         prepMinutes: prepMinutesInput?.value || "",
         cookHours: cookHoursInput?.value || "",
         cookMinutes: cookMinutesInput?.value || "",
+        category: recipeForm.elements.category?.value || "",
         serves: recipeForm.elements.serves?.value || "",
         difficulty: difficultyInput?.value || "",
         imageUrl: imageUrlInput?.value || "",
@@ -463,6 +471,7 @@
       setRecipeFormMode(null);
     }
     if (recipeForm.elements.title) recipeForm.elements.title.value = draft.title || "";
+    if (recipeForm.elements.category) recipeForm.elements.category.value = draft.category || "";
     if (recipeForm.elements.ingredients) recipeForm.elements.ingredients.value = draft.ingredients || "";
     if (recipeForm.elements.method) recipeForm.elements.method.value = draft.method || "";
     if (prepHoursInput) prepHoursInput.value = draft.prepHours || "";
@@ -589,12 +598,20 @@
   const showDetail = recipeRenderer.showDetail;
   const hydrateImagesInBackground = recipeRenderer.hydrateImagesInBackground;
 
+  function rerenderList() {
+    renderList(searchInput.value.trim().toLowerCase(), {
+      category: state.activeCategory || "",
+      favouritesOnly: state.showFavouritesOnly,
+      sortBy: state.sortBy
+    });
+  }
+
   async function loadRecipes() {
     beginRecipeListLoad();
     try {
       if (!hasSupabaseConfig || !state.currentUser) {
         state.recipes = [];
-        renderList(searchInput.value.trim().toLowerCase());
+        rerenderList();
         return;
       }
 
@@ -612,7 +629,7 @@
       }
 
       state.recipes = recipeRenderer.normalizeLoadedRecipes(data, DEFAULT_DIFFICULTY);
-      renderList(searchInput.value.trim().toLowerCase());
+      rerenderList();
 
       void hydrateImagesInBackground(state.recipes);
       if (!state.recipes.length) {
@@ -627,6 +644,7 @@
     const title = formData.get("title")?.toString().trim();
     const ingredients = formData.get("ingredients")?.toString().trim();
     const method = formData.get("method")?.toString().trim();
+    const category = formData.get("category")?.toString().trim() || null;
     const recipeMeta = getRecipeMetaFromFormData(formData);
     if (recipeMeta.error) {
       return;
@@ -648,6 +666,8 @@
         title,
         ingredients,
         method,
+        category,
+        is_favourite: false,
         ...recipeMeta,
         image_url: imageUrlValue,
         created_at: new Date().toISOString()
@@ -658,7 +678,7 @@
       state.recipes = [localRecipe, ...state.recipes];
       saveLocalRecipes(state.recipes);
       resetRecipeFormState();
-      renderList(searchInput.value.trim().toLowerCase());
+      rerenderList();
       showDetail(localRecipe);
       return;
     }
@@ -688,7 +708,8 @@
       image_url: imagePath,
       user_id: state.currentUser.id
     };
-    const payload = state.hasRecipeMetaColumns ? { ...basePayload, ...recipeMeta } : basePayload;
+    const catFavFields = state.hasCategoryFavColumns ? { category, is_favourite: false } : {};
+    const payload = state.hasRecipeMetaColumns ? { ...basePayload, ...recipeMeta, ...catFavFields } : { ...basePayload, ...catFavFields };
 
     try {
       let insertedRows;
@@ -715,7 +736,7 @@
           _resolvedImageUrl: await getSignedImageUrl(insertedRecipe.image_url)
         };
         state.recipes = [hydratedInsertedRecipe, ...state.recipes.filter((item) => item.id !== hydratedInsertedRecipe.id)];
-        renderList(searchInput.value.trim().toLowerCase());
+        rerenderList();
         showDetail(hydratedInsertedRecipe);
       } else {
         setAddRecipeOpen(false);
@@ -753,6 +774,7 @@
     const title = formData.get("title")?.toString().trim();
     const ingredients = formData.get("ingredients")?.toString().trim();
     const method = formData.get("method")?.toString().trim();
+    const category = formData.get("category")?.toString().trim() || null;
     const recipeMeta = getRecipeMetaFromFormData(formData);
     if (recipeMeta.error) {
       return;
@@ -781,13 +803,14 @@
         title,
         ingredients,
         method,
+        category,
         ...recipeMeta,
         image_url: nextImageUrl
       };
       state.recipes = state.recipes.map((item) => (item.id === state.editingRecipeId ? updatedLocalRecipe : item));
       saveLocalRecipes(state.recipes);
       resetRecipeFormState();
-      renderList(searchInput.value.trim().toLowerCase());
+      rerenderList();
       showDetail(updatedLocalRecipe);
       setAppStatus("Recipe updated.");
       return;
@@ -821,7 +844,8 @@
       method,
       image_url: nextImagePath
     };
-    const payload = state.hasRecipeMetaColumns ? { ...basePayload, ...recipeMeta } : basePayload;
+    const catFavFields = state.hasCategoryFavColumns ? { category } : {};
+    const payload = state.hasRecipeMetaColumns ? { ...basePayload, ...recipeMeta, ...catFavFields } : { ...basePayload, ...catFavFields };
 
     try {
       let updatedRows;
@@ -875,7 +899,7 @@
 
       state.recipes = state.recipes.map((item) => (item.id === state.editingRecipeId ? hydratedUpdatedRecipe : item));
       resetRecipeFormState();
-      renderList(searchInput.value.trim().toLowerCase());
+      rerenderList();
       showDetail(hydratedUpdatedRecipe);
       setAppStatus(metaWarning || "Recipe updated.");
     } catch (error) {
@@ -893,7 +917,7 @@
       saveLocalRecipes(state.recipes);
       recipeDetail.classList.add("hidden");
       detailContent.innerHTML = "";
-      renderList(searchInput.value.trim().toLowerCase());
+      rerenderList();
       return;
     }
 
@@ -1525,8 +1549,60 @@
   }
 
   searchInput.addEventListener("input", debounce(() => {
-    renderList(searchInput.value.trim().toLowerCase());
+    rerenderList();
   }, 200));
+
+  if (categoryFilter) {
+    categoryFilter.addEventListener("change", () => {
+      state.activeCategory = categoryFilter.value;
+      rerenderList();
+    });
+  }
+
+  if (favouritesFilter) {
+    favouritesFilter.addEventListener("click", () => {
+      state.showFavouritesOnly = !state.showFavouritesOnly;
+      favouritesFilter.setAttribute("aria-pressed", String(state.showFavouritesOnly));
+      favouritesFilter.classList.toggle("button--ghost", !state.showFavouritesOnly);
+      favouritesFilter.classList.toggle("button--fav-active", state.showFavouritesOnly);
+      favouritesFilter.innerHTML = (state.showFavouritesOnly ? "&#9829;" : "&#9825;") + " Favourites";
+      rerenderList();
+    });
+  }
+
+  if (sortSelect) {
+    sortSelect.addEventListener("change", () => {
+      state.sortBy = sortSelect.value;
+      rerenderList();
+    });
+  }
+
+  async function toggleFavourite(recipeId) {
+    const recipe = state.recipes.find((item) => item.id === recipeId);
+    if (!recipe) return;
+    const newValue = !recipe.is_favourite;
+    recipe.is_favourite = newValue;
+
+    if (hasSupabaseConfig && state.currentUser) {
+      try {
+        await updateRecipeViaRest(recipeId, state.currentUser.id, { is_favourite: newValue });
+      } catch (error) {
+        recipe.is_favourite = !newValue;
+        if (error?.message?.includes("column") || error?.message?.includes("is_favourite")) {
+          state.hasCategoryFavColumns = false;
+        }
+        logSupabaseError("toggle favourite", error);
+      }
+    } else {
+      saveLocalRecipes(state.recipes);
+    }
+
+    rerenderList();
+    const openedDeleteButton = detailContent.querySelector("button[data-action='delete']");
+    if (openedDeleteButton?.dataset?.id === recipeId) {
+      showDetail(recipe, { scrollToDetail: false });
+    }
+  }
 
   toggleAddRecipe.addEventListener("click", () => {
     const shouldShow = addRecipeSection.classList.contains("hidden");
@@ -1537,6 +1613,13 @@
   });
 
   recipeList.addEventListener("click", (event) => {
+    const favTrigger = event.target.closest("[data-action='toggle-fav']");
+    if (favTrigger) {
+      const recipeId = favTrigger.dataset.id;
+      if (recipeId) toggleFavourite(recipeId);
+      return;
+    }
+
     const trigger = event.target.closest("[data-action='view']");
     if (!trigger) return;
 
@@ -1560,7 +1643,7 @@
       setAppStatus,
       logSupabaseError,
       showDetail,
-      renderList,
+      renderList: rerenderList,
       saveLocalRecipes,
       isMissingRecipeMetaColumns
     }
@@ -1568,6 +1651,13 @@
   inlineEditManager.attachListeners();
 
   detailContent.addEventListener("click", async (event) => {
+    const favTrigger = event.target.closest("button[data-action='toggle-fav']");
+    if (favTrigger) {
+      const recipeId = favTrigger.dataset.id;
+      if (recipeId) toggleFavourite(recipeId);
+      return;
+    }
+
     const editButton = event.target.closest("button[data-action='edit']");
     if (editButton) {
       const recipe = state.recipes.find((item) => item.id === editButton.dataset.id);

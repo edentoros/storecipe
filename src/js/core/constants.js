@@ -35,6 +35,10 @@ Rules:
 - Keep method concise and practical.
 - If unsure, use null.`;
 
+const RECIPE_CATEGORIES = [
+  "Breakfast", "Lunch", "Dinner", "Snack", "Dessert", "Drinks", "Other"
+];
+
 window.StorecipeConstants = {
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY,
@@ -54,5 +58,6 @@ window.StorecipeConstants = {
   RECIPE_IMPORT_FUNCTION,
   RECIPE_IMPORT_PROMPT_LOCAL_KEY_PREFIX,
   RECIPE_IMPORT_PROMPT_DEFAULT_KEY,
-  DEFAULT_RECIPE_IMPORT_PROMPT
+  DEFAULT_RECIPE_IMPORT_PROMPT,
+  RECIPE_CATEGORIES
 };
