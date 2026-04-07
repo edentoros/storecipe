@@ -19,7 +19,8 @@
       settingsBackdrop,
       recipeListLoading,
       recipeList: recipeListEl,
-      appStatus: appStatusEl
+      appStatus: appStatusEl,
+      toastContainer
     } = dom;
     const { hasSupabaseConfig, SIGNED_OUT_PROMPT } = config;
     const { setSettingsOpen, updateThemeToggleUi } = callbacks;
@@ -110,9 +111,40 @@
       setRecipeListLoading(false);
     }
 
+    function showToast(message, type = "info", durationMs = 4000) {
+      if (!toastContainer || !message) return;
+      const toast = document.createElement("div");
+      toast.className = `toast toast--${type}`;
+      toast.textContent = message;
+      toast.setAttribute("role", "status");
+      toastContainer.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add("toast--visible"));
+
+      const dismiss = () => {
+        toast.classList.remove("toast--visible");
+        toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+        setTimeout(() => toast.remove(), 400);
+      };
+      toast.addEventListener("click", dismiss);
+      if (durationMs > 0) setTimeout(dismiss, durationMs);
+    }
+
+    function inferToastType(message) {
+      if (!message) return null;
+      const lower = message.toLowerCase();
+      if (lower.endsWith("...")) return null;
+      if (lower.includes("failed") || lower.includes("missing") || lower.includes("error") || lower.includes("mismatch") || lower.includes("sign in before") || lower.includes("please fill")) return "error";
+      if (lower.includes("saved") || lower.includes("signed in") || lower.includes("deleted") || lower.includes("updated") || lower.includes("sent") || lower.includes("imported") || lower.includes("recipe added")) return "success";
+      return "info";
+    }
+
     function setAppStatus(message) {
       if (appStatusEl) {
         appStatusEl.textContent = message;
+      }
+      if (message) {
+        const type = inferToastType(message);
+        if (type) showToast(message, type, type === "error" ? 6000 : 4000);
       }
     }
 

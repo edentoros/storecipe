@@ -55,6 +55,7 @@
   const { createInlineEditManager } = window.StorecipeInlineEditManager;
 
   const {
+    toastContainer,
     appRoot,
     startupLoader,
     authForm,
@@ -293,7 +294,7 @@
       authStatus, authLoading, authLoadingText, authEmail, authPassword,
       signInButton, signUpButton, signOutButton, themeToggleButton, signedInEmail,
       authEmailLabel, authPasswordLabel, authPanel, settingsButton, closeSettingsButton,
-      settingsBackdrop, recipeListLoading, recipeList, appStatus
+      settingsBackdrop, recipeListLoading, recipeList, appStatus, toastContainer
     },
     state,
     config: { hasSupabaseConfig, SIGNED_OUT_PROMPT },

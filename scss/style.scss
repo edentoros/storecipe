@@ -77,9 +77,55 @@ body {
 }
 
 .app-status {
-  margin: $space-sm 0 0;
-  color: $muted;
-  font-size: 0.95rem;
+  @extend .sr-only;
+}
+
+.toast-container {
+  position: fixed;
+  top: $space-md;
+  right: $space-md;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+  pointer-events: none;
+  max-width: 380px;
+}
+
+.toast {
+  padding: $space-sm $space-md;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+
+  &--visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  &--info {
+    background-color: #e8f0fe;
+    color: #1a3d5c;
+    border-left: 4px solid #4a90d9;
+  }
+
+  &--success {
+    background-color: #e6f4ea;
+    color: #1e4620;
+    border-left: 4px solid #34a853;
+  }
+
+  &--error {
+    background-color: #fdecea;
+    color: #611a15;
+    border-left: 4px solid #d93025;
+  }
 }
 
 .app__header-top {
@@ -975,6 +1021,27 @@ body.theme-dark {
     background-color: #4a1c1c;
     color: #f5a8a8;
     border-color: #6b2e2e;
+  }
+
+  .toast--info {
+    background-color: #1a2d42;
+    color: #a8cceb;
+    border-left-color: #4a90d9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .toast--success {
+    background-color: #1a3324;
+    color: #a8e6b4;
+    border-left-color: #34a853;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .toast--error {
+    background-color: #4a1c1c;
+    color: #f5a8a8;
+    border-left-color: #d93025;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   }
 
   .recipe-card .recipe-card__body .recipe-card__meta-item strong {

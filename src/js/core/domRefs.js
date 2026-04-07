@@ -1,6 +1,7 @@
 function getDomRefs() {
   const authForm = document.getElementById("authForm");
   return {
+    toastContainer: document.getElementById("toastContainer"),
     appRoot: document.getElementById("appRoot"),
     startupLoader: document.getElementById("startupLoader"),
     authForm,
