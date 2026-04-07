@@ -115,16 +115,32 @@
       if (!toastContainer || !message) return;
       const toast = document.createElement("div");
       toast.className = `toast toast--${type}`;
-      toast.textContent = message;
+
+      const text = document.createElement("span");
+      text.className = "toast__text";
+      text.textContent = message;
+      toast.appendChild(text);
+
+      const closeBtn = document.createElement("button");
+      closeBtn.className = "toast__close";
+      closeBtn.type = "button";
+      closeBtn.setAttribute("aria-label", "Dismiss");
+      closeBtn.innerHTML = "&#215;";
+      toast.appendChild(closeBtn);
+
       toast.setAttribute("role", "status");
       toastContainer.appendChild(toast);
       requestAnimationFrame(() => toast.classList.add("toast--visible"));
 
+      let dismissed = false;
       const dismiss = () => {
+        if (dismissed) return;
+        dismissed = true;
         toast.classList.remove("toast--visible");
         toast.addEventListener("transitionend", () => toast.remove(), { once: true });
         setTimeout(() => toast.remove(), 400);
       };
+      closeBtn.addEventListener("click", (e) => { e.stopPropagation(); dismiss(); });
       toast.addEventListener("click", dismiss);
       if (durationMs > 0) setTimeout(dismiss, durationMs);
     }

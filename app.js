@@ -598,7 +598,20 @@
   const showDetail = recipeRenderer.showDetail;
   const hydrateImagesInBackground = recipeRenderer.hydrateImagesInBackground;
 
+  function updateFilterVisibility() {
+    const recipes = Array.isArray(state.recipes) ? state.recipes : [];
+    const showFilters = recipes.length > 2;
+    const uniqueCategories = new Set(recipes.map((r) => r.category).filter(Boolean));
+    const showCategoryFilter = showFilters && uniqueCategories.size > 1;
+
+    if (sortSelect) sortSelect.closest(".search-filters")?.classList.toggle("hidden", !showFilters);
+    if (categoryFilter) categoryFilter.classList.toggle("hidden", !showCategoryFilter);
+    if (favouritesFilter) favouritesFilter.classList.toggle("hidden", !showFilters);
+    if (sortSelect) sortSelect.classList.toggle("hidden", !showFilters);
+  }
+
   function rerenderList() {
+    updateFilterVisibility();
     renderList(searchInput.value.trim().toLowerCase(), {
       category: state.activeCategory || "",
       favouritesOnly: state.showFavouritesOnly,
