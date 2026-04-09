@@ -364,11 +364,11 @@ function createRecipeRenderer({
           <button class="button button--secondary" type="button" data-action="edit" data-id="${recipe.id}">
             Edit Recipe
           </button>
-          <button class="button button--secondary" type="button" data-action="duplicate" data-id="${recipe.id}">
+          <button class="button button--secondary hidden" type="button" data-action="duplicate" data-id="${recipe.id}">
             Duplicate
           </button>
-          <button class="button button--secondary" type="button" data-action="share" data-id="${recipe.id}">
-            ${recipe.is_public ? "🔗 Shared" : "Share"}
+          <button class="button button--secondary hidden" type="button" data-action="share" data-id="${recipe.id}">
+            Share
           </button>
           <button class="button button--secondary recipe-detail-card__print-button" type="button" onclick="window.print()">
             Print
