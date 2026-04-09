@@ -369,6 +369,9 @@
     }
     recipeForm.elements.ingredients.value = recipe.ingredients || "";
     recipeForm.elements.method.value = recipe.method || "";
+    if (recipeForm.elements.notes) {
+      recipeForm.elements.notes.value = recipe.notes || "";
+    }
     const prepParsed = parseDurationText(recipe.prep_time ?? recipe.prepTime ?? "");
     const cookParsed = parseDurationText(recipe.cooking_time ?? recipe.cookingTime ?? "");
     if (prepHoursInput) {
@@ -421,6 +424,7 @@
         title: recipeForm.elements.title?.value || "",
         ingredients: recipeForm.elements.ingredients?.value || "",
         method: recipeForm.elements.method?.value || "",
+        notes: recipeForm.elements.notes?.value || "",
         prepHours: prepHoursInput?.value || "",
         prepMinutes: prepMinutesInput?.value || "",
         cookHours: cookHoursInput?.value || "",
@@ -474,6 +478,7 @@
     if (recipeForm.elements.category) recipeForm.elements.category.value = draft.category || "";
     if (recipeForm.elements.ingredients) recipeForm.elements.ingredients.value = draft.ingredients || "";
     if (recipeForm.elements.method) recipeForm.elements.method.value = draft.method || "";
+    if (recipeForm.elements.notes) recipeForm.elements.notes.value = draft.notes || "";
     if (prepHoursInput) prepHoursInput.value = draft.prepHours || "";
     if (prepMinutesInput) prepMinutesInput.value = draft.prepMinutes || "";
     if (cookHoursInput) cookHoursInput.value = draft.cookHours || "";
@@ -657,6 +662,7 @@
     const title = formData.get("title")?.toString().trim();
     const ingredients = formData.get("ingredients")?.toString().trim();
     const method = formData.get("method")?.toString().trim();
+    const notes = formData.get("notes")?.toString().trim() || null;
     const category = formData.get("category")?.toString().trim() || null;
     const recipeMeta = getRecipeMetaFromFormData(formData);
     if (recipeMeta.error) {
@@ -679,6 +685,7 @@
         title,
         ingredients,
         method,
+        notes,
         category,
         is_favourite: false,
         ...recipeMeta,
@@ -718,6 +725,7 @@
       title,
       ingredients,
       method,
+      notes,
       image_url: imagePath,
       user_id: state.currentUser.id
     };
@@ -787,6 +795,7 @@
     const title = formData.get("title")?.toString().trim();
     const ingredients = formData.get("ingredients")?.toString().trim();
     const method = formData.get("method")?.toString().trim();
+    const notes = formData.get("notes")?.toString().trim() || null;
     const category = formData.get("category")?.toString().trim() || null;
     const recipeMeta = getRecipeMetaFromFormData(formData);
     if (recipeMeta.error) {
@@ -816,6 +825,7 @@
         title,
         ingredients,
         method,
+        notes,
         category,
         ...recipeMeta,
         image_url: nextImageUrl
@@ -855,6 +865,7 @@
       title,
       ingredients,
       method,
+      notes,
       image_url: nextImagePath
     };
     const catFavFields = state.hasCategoryFavColumns ? { category } : {};
@@ -1676,6 +1687,38 @@
       const recipe = state.recipes.find((item) => item.id === editButton.dataset.id);
       if (recipe) {
         startEditRecipe(recipe);
+      }
+      return;
+    }
+
+    const dupButton = event.target.closest("button[data-action='duplicate']");
+    if (dupButton) {
+      const recipe = state.recipes.find((item) => item.id === dupButton.dataset.id);
+      if (recipe) {
+        resetRecipeFormState();
+        recipeForm.elements.title.value = `Copy of ${recipe.title || ""}`;
+        if (recipeForm.elements.category) recipeForm.elements.category.value = recipe.category || "";
+        recipeForm.elements.ingredients.value = recipe.ingredients || "";
+        recipeForm.elements.method.value = recipe.method || "";
+        if (recipeForm.elements.notes) recipeForm.elements.notes.value = recipe.notes || "";
+        const prepParsed = parseDurationText(recipe.prep_time ?? "");
+        const cookParsed = parseDurationText(recipe.cooking_time ?? "");
+        if (prepHoursInput) prepHoursInput.value = prepParsed.hours;
+        if (prepMinutesInput) prepMinutesInput.value = prepParsed.minutes;
+        if (cookHoursInput) cookHoursInput.value = cookParsed.hours;
+        if (cookMinutesInput) cookMinutesInput.value = cookParsed.minutes;
+        if (recipeForm.elements.serves) recipeForm.elements.serves.value = recipe.serves ?? "";
+        if (difficultyInput) {
+          difficultyInput.value = String(normalizeDifficulty(recipe.difficulty));
+          syncDifficultyUi();
+        }
+        if (recipe.image_url && isValidHttpUrl(recipe.image_url)) {
+          state.pendingImageAction = "replace_url";
+          state.pendingImageUrl = recipe.image_url;
+        }
+        getRecipeMetaFromFormData(new FormData(recipeForm), { showStatus: false });
+        setAddRecipeOpen(true);
+        setAppStatus("Recipe duplicated. Edit and save as a new recipe.");
       }
       return;
     }

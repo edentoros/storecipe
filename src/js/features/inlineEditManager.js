@@ -14,6 +14,7 @@
       if (
         normalized === "ingredients" ||
         normalized === "method" ||
+        normalized === "notes" ||
         normalized === "prep_time" ||
         normalized === "cooking_time" ||
         normalized === "difficulty"
@@ -29,6 +30,8 @@
           return "ingredients";
         case "method":
           return "method";
+        case "notes":
+          return "notes";
         case "prep_time":
           return "prep time";
         case "cooking_time":
@@ -135,7 +138,7 @@
       editor.dataset.field = normalizedField;
       let focusTarget = null;
 
-      if (normalizedField === "ingredients" || normalizedField === "method") {
+      if (normalizedField === "ingredients" || normalizedField === "method" || normalizedField === "notes") {
         const textarea = document.createElement("textarea");
         textarea.className = "recipe-inline-editor__input recipe-inline-editor__focus-target";
         textarea.value = String(recipe[normalizedField] ?? "");
@@ -268,7 +271,7 @@
       let payload = {};
       let hasChanges = false;
 
-      if (normalizedField === "ingredients" || normalizedField === "method") {
+      if (normalizedField === "ingredients" || normalizedField === "method" || normalizedField === "notes") {
         const valueInput = editor.querySelector(".recipe-inline-editor__input");
         if (!(valueInput instanceof HTMLTextAreaElement)) return false;
         const value = String(valueInput.value ?? "").trim();

@@ -321,12 +321,34 @@ function createRecipeRenderer({
           >${escapeHtml(recipe.method).replace(/\n/g, "<br />")}</button>
         </section>
 
-        <button class="button button--secondary" type="button" data-action="edit" data-id="${recipe.id}">
-          Edit Recipe
-        </button>
-        <button class="button button--danger" type="button" data-action="delete" data-id="${recipe.id}">
-          Delete Recipe
-        </button>
+        ${recipe.notes ? `<section class="recipe-detail-card__section" data-field="notes">
+          <h3 class="recipe-detail-card__editable-title">
+            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="notes" type="button" aria-label="Click to edit notes">Notes / Tips</button>
+          </h3>
+          <button
+            class="inline-edit-trigger recipe-detail-card__editable"
+            data-action="inline-edit-field"
+            data-field="notes"
+            data-field-content="notes"
+            type="button"
+            aria-label="Click to edit notes"
+          >${escapeHtml(recipe.notes).replace(/\n/g, "<br />")}</button>
+        </section>` : `<button class="button button--ghost recipe-detail-card__add-notes" type="button" data-action="inline-edit-field" data-field="notes" data-id="${recipe.id}">+ Add Notes / Tips</button>`}
+
+        <div class="recipe-detail-card__actions">
+          <button class="button button--secondary" type="button" data-action="edit" data-id="${recipe.id}">
+            Edit Recipe
+          </button>
+          <button class="button button--secondary" type="button" data-action="duplicate" data-id="${recipe.id}">
+            Duplicate
+          </button>
+          <button class="button button--secondary recipe-detail-card__print-button" type="button" onclick="window.print()">
+            Print
+          </button>
+          <button class="button button--danger" type="button" data-action="delete" data-id="${recipe.id}">
+            Delete Recipe
+          </button>
+        </div>
       </article>
     `;
     };

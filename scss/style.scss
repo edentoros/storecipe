@@ -838,6 +838,24 @@ button:active:not(:disabled) {
     vertical-align: middle;
   }
 
+  .recipe-detail-card__add-notes {
+    margin-top: $space-sm;
+    font-size: 0.9rem;
+  }
+
+  .recipe-detail-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-sm;
+    margin-top: $space-md;
+
+    .button {
+      margin-top: 0;
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+
   .recipe-detail-card__image-wrap {
     position: relative;
     overflow: hidden;
@@ -1407,5 +1425,57 @@ body.theme-dark {
   .recipe-list-skeleton__image {
     height: 100%;
     min-height: 180px;
+  }
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+
+  .app__header,
+  .panel--auth,
+  .panel--search,
+  .panel--list,
+  .panel--form,
+  #startupLoader,
+  #closeDetail,
+  .toast-container,
+  .settings-backdrop,
+  .recipe-detail-card__actions,
+  .recipe-detail-card__fav-button,
+  .recipe-detail-card__add-notes,
+  .inline-edit-trigger {
+    display: none !important;
+  }
+
+  .panel--detail,
+  #recipeDetail {
+    display: block !important;
+  }
+
+  .panel {
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .recipe-detail-card__image-wrap {
+    max-height: 300px;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .recipe-detail-card__section {
+    break-inside: avoid;
+  }
+
+  .recipe-detail-card__editable {
+    border: none !important;
+    padding: 0 !important;
+    text-align: left;
+    cursor: default;
   }
 }
