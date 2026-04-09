@@ -57,7 +57,7 @@ body {
 }
 
 .app {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
   padding: $space-md;
 }
@@ -86,7 +86,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 720px;
+  max-width: 960px;
   padding: 0 $space-md;
   z-index: 9999;
   display: flex;
@@ -1001,7 +1001,7 @@ button:active:not(:disabled) {
 
 /* ─── Meal Planner ─── */
 .meal-planner-modal {
-  max-width: 720px;
+  max-width: 960px;
 }
 
 .meal-planner {
