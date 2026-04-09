@@ -16,6 +16,16 @@ function normalizeDifficulty(value, defaultDifficulty) {
   return numeric;
 }
 
+function getDifficultyLabel(value) {
+  const n = Number(value);
+  if (n <= 1) return "Very Easy";
+  if (n <= 3) return "Easy";
+  if (n <= 5) return "Medium";
+  if (n <= 7) return "Hard";
+  if (n <= 9) return "Very Hard";
+  return "Expert";
+}
+
 function normalizeTheme(value) {
   const v = String(value).toLowerCase();
   if (v === "dark") return "dark";
@@ -237,6 +247,7 @@ window.StorecipeHelpers = {
   formatDate,
   escapeHtml,
   normalizeDifficulty,
+  getDifficultyLabel,
   normalizeTheme,
   withTimeout,
   getDirectImageUrl,

@@ -12,6 +12,7 @@ function createRecipeRenderer({
     formatDate,
     escapeHtml,
     normalizeDifficulty,
+    getDifficultyLabel,
     parseDurationText,
     formatDuration,
     getDisplayImageUrl,
@@ -191,7 +192,8 @@ function createRecipeRenderer({
           const prepTimeValue = String(recipe.prep_time ?? recipe.prepTime ?? "").trim();
           const cookingTimeValue = String(recipe.cooking_time ?? recipe.cookingTime ?? "").trim();
           const servesValue = String(recipe.serves ?? recipe.servings ?? "").trim();
-          const difficultyLevel = String(normalizeDifficulty(recipe.difficulty, 4));
+          const difficultyNum = normalizeDifficulty(recipe.difficulty, 4);
+          const difficultyLevel = `${difficultyNum} — ${getDifficultyLabel(difficultyNum)}`;
           const metaItems = [
             { label: "Prep", value: prepTimeValue },
             { label: "Cook", value: cookingTimeValue },
@@ -249,7 +251,8 @@ function createRecipeRenderer({
         prepMinutesTotal > 0 || cookMinutesTotal > 0 ? formatDuration(prepMinutesTotal + cookMinutesTotal) : "";
       const totalTime = recipe.total_time ?? recipe.totalTime ?? computedTotalTime;
       const serves = recipe.serves ?? recipe.servings ?? "";
-      const difficulty = String(normalizeDifficulty(recipe.difficulty, 4));
+      const difficultyNum = normalizeDifficulty(recipe.difficulty, 4);
+      const difficulty = `${difficultyNum} — ${getDifficultyLabel(difficultyNum)}`;
       const metaItems = [
         { label: "Prep Time", value: toMetaText(prepTime), field: "prep_time", editable: true },
         { label: "Cooking Time", value: toMetaText(cookingTime), field: "cooking_time", editable: true },

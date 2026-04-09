@@ -26,6 +26,7 @@
     formatDate,
     escapeHtml,
     normalizeDifficulty: normalizeDifficultyCore,
+    getDifficultyLabel,
     normalizeTheme,
     withTimeout,
     getDirectImageUrl,
@@ -122,6 +123,8 @@
     detailContent,
     closeDetail,
     openShoppingList,
+    floatingShoppingList,
+    floatingShoppingCount,
     shoppingListModal,
     closeShoppingList,
     shoppingListEmpty,
@@ -551,6 +554,7 @@
     defaultDifficulty: DEFAULT_DIFFICULTY,
     helpers: {
       normalizeDifficulty: normalizeDifficultyCore,
+      getDifficultyLabel,
       parseTimePair,
       validateServesValue,
       formatDuration
@@ -612,6 +616,7 @@
       formatDate,
       escapeHtml,
       normalizeDifficulty: normalizeDifficultyCore,
+      getDifficultyLabel,
       parseDurationText,
       formatDuration,
       getDisplayImageUrl,
@@ -1714,10 +1719,23 @@
 
   /* ─── Shopping List ─── */
 
+  function updateFloatingShoppingBadge() {
+    const count = state.shoppingListRecipeIds.length;
+    if (floatingShoppingList) {
+      floatingShoppingList.classList.toggle("hidden", count === 0);
+    }
+    if (floatingShoppingCount) {
+      floatingShoppingCount.textContent = String(count);
+      floatingShoppingCount.classList.toggle("hidden", count === 0);
+    }
+  }
+
   function renderShoppingList() {
     const selectedRecipes = state.shoppingListRecipeIds
       .map((id) => state.recipes.find((r) => r.id === id))
       .filter(Boolean);
+
+    updateFloatingShoppingBadge();
 
     if (!selectedRecipes.length) {
       shoppingListEmpty.classList.remove("hidden");
@@ -1761,8 +1779,14 @@
       const li = document.createElement("li");
       li.className = "shopping-list__item";
       const qtyText = item.quantity !== null ? decimalToFraction(item.quantity) : "";
-      const unitText = item.unit || "";
-      li.innerHTML = `<label><input type="checkbox" class="shopping-list__check" /><span>${escapeHtml(`${qtyText} ${unitText} ${item.name}`.trim())}</span></label>`;
+      const unitText = item.unit ? escapeHtml(item.unit) : "";
+      const nameText = escapeHtml(item.name);
+      li.innerHTML = `<label>
+        <input type="checkbox" class="shopping-list__check" />
+        <span class="shopping-list__qty">${escapeHtml(qtyText)}</span>
+        <span class="shopping-list__unit">${unitText}</span>
+        <span class="shopping-list__name">${nameText}</span>
+      </label>`;
       shoppingListItems.appendChild(li);
     }
   }
@@ -1788,6 +1812,9 @@
 
   if (openShoppingList) {
     openShoppingList.addEventListener("click", openShoppingListModal);
+  }
+  if (floatingShoppingList) {
+    floatingShoppingList.addEventListener("click", openShoppingListModal);
   }
   if (closeShoppingList) {
     closeShoppingList.addEventListener("click", closeShoppingListModal);

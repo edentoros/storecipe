@@ -66,6 +66,8 @@ function getDomRefs() {
     detailContent: document.getElementById("detailContent"),
     closeDetail: document.getElementById("closeDetail"),
     openShoppingList: document.getElementById("openShoppingList"),
+    floatingShoppingList: document.getElementById("floatingShoppingList"),
+    floatingShoppingCount: document.getElementById("floatingShoppingCount"),
     shoppingListModal: document.getElementById("shoppingListModal"),
     closeShoppingList: document.getElementById("closeShoppingList"),
     shoppingListEmpty: document.getElementById("shoppingListEmpty"),

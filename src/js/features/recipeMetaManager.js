@@ -14,13 +14,13 @@ function createRecipeMetaManager({
   defaultDifficulty,
   helpers
 }) {
-  const { normalizeDifficulty, parseTimePair, validateServesValue, formatDuration } = helpers;
+  const { normalizeDifficulty, getDifficultyLabel, parseTimePair, validateServesValue, formatDuration } = helpers;
 
   function syncDifficultyUi() {
     if (!difficultyInput || !difficultyValue) return;
     const normalized = normalizeDifficulty(difficultyInput.value, defaultDifficulty);
     difficultyInput.value = String(normalized);
-    difficultyValue.textContent = String(normalized);
+    difficultyValue.textContent = `${normalized} — ${getDifficultyLabel(normalized)}`;
   }
 
   function setFieldValidity(input, message = "") {

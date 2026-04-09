@@ -309,23 +309,7 @@
         <div id="detailContent"></div>
       </section>
 
-      <div id="shoppingListModal" class="modal-overlay hidden" aria-hidden="true">
-        <div class="modal shopping-list-modal" role="dialog" aria-labelledby="shoppingListTitle">
-          <div class="modal__header">
-            <h2 id="shoppingListTitle">Shopping List</h2>
-            <button id="closeShoppingList" class="icon-button button--ghost" type="button" aria-label="Close shopping list">x</button>
-          </div>
-          <div class="modal__body">
-            <p id="shoppingListEmpty" class="empty">No recipes selected. Use the "+ Shopping List" button on a recipe to add ingredients.</p>
-            <div id="shoppingListRecipes" class="shopping-list__recipes hidden"></div>
-            <ul id="shoppingListItems" class="shopping-list__items hidden"></ul>
-          </div>
-          <div class="modal__footer">
-            <button id="clearShoppingList" class="button button--ghost" type="button">Clear All</button>
-            <button id="copyShoppingList" class="button button--secondary" type="button">Copy to Clipboard</button>
-          </div>
-        </div>
-      </div>
+      <!-- Shopping list modal moved outside main for global access -->
 
       <div id="mealPlannerModal" class="modal-overlay hidden" aria-hidden="true">
         <div class="modal meal-planner-modal" role="dialog" aria-labelledby="mealPlannerTitle">
@@ -364,6 +348,26 @@
         </div>
       </div>
     </main>
+
+    <button id="floatingShoppingList" class="floating-shopping-btn hidden" type="button" aria-label="Open shopping list" title="Shopping List">&#128722;<span id="floatingShoppingCount" class="floating-shopping-btn__count hidden">0</span></button>
+
+    <div id="shoppingListModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal shopping-list-modal" role="dialog" aria-labelledby="shoppingListTitle">
+        <div class="modal__header">
+          <h2 id="shoppingListTitle">Shopping List</h2>
+          <button id="closeShoppingList" class="icon-button button--ghost" type="button" aria-label="Close shopping list">x</button>
+        </div>
+        <div class="modal__body">
+          <p id="shoppingListEmpty" class="empty">No recipes selected. Use the "+ Shopping List" button on a recipe to add ingredients.</p>
+          <div id="shoppingListRecipes" class="shopping-list__recipes hidden"></div>
+          <ul id="shoppingListItems" class="shopping-list__items hidden"></ul>
+        </div>
+        <div class="modal__footer">
+          <button id="clearShoppingList" class="button button--ghost" type="button">Clear All</button>
+          <button id="copyShoppingList" class="button button--secondary" type="button">Copy to Clipboard</button>
+        </div>
+      </div>
+    </div>
 
     <script src="src/js/core/config.js" onerror="this.remove()"></script>
     <script defer src="src/js/core/constants.js"></script>
