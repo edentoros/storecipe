@@ -103,6 +103,8 @@
             <option value="other">Other</option>
           </select>
           <button id="favouritesFilter" class="button button--ghost" type="button" aria-pressed="false" title="Show favourites only">&#9825; Favourites</button>
+          <button id="openShoppingList" class="button button--ghost" type="button" title="Open shopping list">&#128722; Shopping List</button>
+          <button id="openMealPlanner" class="button button--ghost" type="button" title="Open meal planner">&#128197; Meal Planner</button>
           <select id="sortSelect" aria-label="Sort recipes">
             <option value="created_at_desc">Newest first</option>
             <option value="created_at_asc">Oldest first</option>
@@ -306,12 +308,68 @@
         <button id="closeDetail" class="button button--secondary" type="button">Back to List</button>
         <div id="detailContent"></div>
       </section>
+
+      <div id="shoppingListModal" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal shopping-list-modal" role="dialog" aria-labelledby="shoppingListTitle">
+          <div class="modal__header">
+            <h2 id="shoppingListTitle">Shopping List</h2>
+            <button id="closeShoppingList" class="icon-button button--ghost" type="button" aria-label="Close shopping list">x</button>
+          </div>
+          <div class="modal__body">
+            <p id="shoppingListEmpty" class="empty">No recipes selected. Use the "+ Shopping List" button on a recipe to add ingredients.</p>
+            <div id="shoppingListRecipes" class="shopping-list__recipes hidden"></div>
+            <ul id="shoppingListItems" class="shopping-list__items hidden"></ul>
+          </div>
+          <div class="modal__footer">
+            <button id="clearShoppingList" class="button button--ghost" type="button">Clear All</button>
+            <button id="copyShoppingList" class="button button--secondary" type="button">Copy to Clipboard</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="mealPlannerModal" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal meal-planner-modal" role="dialog" aria-labelledby="mealPlannerTitle">
+          <div class="modal__header">
+            <h2 id="mealPlannerTitle">Meal Planner</h2>
+            <button id="closeMealPlanner" class="icon-button button--ghost" type="button" aria-label="Close meal planner">x</button>
+          </div>
+          <div class="modal__body">
+            <div class="meal-planner__week-nav">
+              <button id="mealPlannerPrevWeek" class="button button--ghost" type="button" aria-label="Previous week">&laquo; Prev</button>
+              <span id="mealPlannerWeekLabel" class="meal-planner__week-label"></span>
+              <button id="mealPlannerNextWeek" class="button button--ghost" type="button" aria-label="Next week">Next &raquo;</button>
+            </div>
+            <div id="mealPlannerGrid" class="meal-planner__grid"></div>
+            <div class="meal-planner__recipe-picker">
+              <label for="mealPlannerRecipeSelect">Add recipe:</label>
+              <select id="mealPlannerRecipeSelect">
+                <option value="">-- Pick a recipe --</option>
+              </select>
+              <label for="mealPlannerDaySelect">to:</label>
+              <select id="mealPlannerDaySelect">
+                <option value="0">Monday</option>
+                <option value="1">Tuesday</option>
+                <option value="2">Wednesday</option>
+                <option value="3">Thursday</option>
+                <option value="4">Friday</option>
+                <option value="5">Saturday</option>
+                <option value="6">Sunday</option>
+              </select>
+              <button id="mealPlannerAddBtn" class="button button--secondary" type="button">Add</button>
+            </div>
+          </div>
+          <div class="modal__footer">
+            <button id="clearMealPlanner" class="button button--ghost" type="button">Clear Week</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <script src="src/js/core/config.js" onerror="this.remove()"></script>
     <script defer src="src/js/core/constants.js"></script>
     <script defer src="src/js/core/domRefs.js"></script>
     <script defer src="src/js/core/helpers.js"></script>
+    <script defer src="src/js/core/ingredientParser.js"></script>
     <script defer src="src/js/core/appState.js"></script>
     <script defer src="src/js/features/imageManager.js"></script>
     <script defer src="src/js/features/settingsManager.js"></script>

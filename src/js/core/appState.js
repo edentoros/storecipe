@@ -26,7 +26,9 @@
       hasCategoryFavColumns: true,
       activeCategory: "",
       showFavouritesOnly: false,
-      sortBy: "created_at_desc"
+      sortBy: "created_at_desc",
+      hasShareColumns: true,
+      shoppingListRecipeIds: []
     };
   }
 

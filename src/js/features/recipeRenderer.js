@@ -15,7 +15,8 @@ function createRecipeRenderer({
     parseDurationText,
     formatDuration,
     getDisplayImageUrl,
-    getDirectImageUrl
+    getDirectImageUrl,
+    scaleIngredients
   } = helpers;
 
   function patchRecipeCardImage(recipe) {
@@ -281,9 +282,26 @@ function createRecipeRenderer({
       const favLabel = favActive ? "Remove from favourites" : "Add to favourites";
       const favClass = "recipe-detail-card__fav-button" + (favActive ? " recipe-detail-card__fav-button--active" : "");
 
+      let galleryImages = [];
+      try { galleryImages = JSON.parse(recipe.gallery_images || "[]"); } catch (_) { /* ignore */ }
+      const galleryHtml = galleryImages.length
+        ? `<div class="recipe-gallery">
+            ${galleryImages.map((url, idx) => `<div class="recipe-gallery__item">
+              <img src="${escapeHtml(url)}" alt="Gallery image ${idx + 1}" loading="lazy" />
+              <button type="button" class="recipe-gallery__remove" data-action="remove-gallery-image" data-idx="${idx}" data-id="${recipe.id}" aria-label="Remove image">&times;</button>
+            </div>`).join("")}
+          </div>`
+        : "";
+
       detailContent.innerHTML = `
       <article class="recipe-detail-card">
         ${imageHtml}
+        ${galleryHtml}
+        <div class="recipe-gallery__add-wrap">
+          <button type="button" class="button button--ghost" data-action="add-gallery-image" data-id="${recipe.id}">+ Add Gallery Image</button>
+          <input type="file" class="recipe-gallery__file-input hidden" accept="image/*" data-id="${recipe.id}" />
+          <input type="text" class="recipe-gallery__url-input hidden" placeholder="Or paste image URL and press Enter" data-id="${recipe.id}" />
+        </div>
         <div class="recipe-detail-card__header">
           <div class="recipe-detail-card__title-row">
             <h2>${escapeHtml(recipe.title)}</h2>
@@ -297,6 +315,13 @@ function createRecipeRenderer({
           <h3 class="recipe-detail-card__editable-title">
             <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="ingredients" type="button" aria-label="Click to edit ingredients">Ingredients</button>
           </h3>
+          ${serves ? `<div class="serving-scaler" data-original-serves="${escapeHtml(String(serves))}" data-original-ingredients="${escapeHtml(recipe.ingredients)}">
+            <button type="button" class="serving-scaler__btn" data-action="scale-down" aria-label="Decrease servings">&minus;</button>
+            <span class="serving-scaler__value" data-scale-display>${escapeHtml(String(serves))}</span>
+            <span class="serving-scaler__label">servings</span>
+            <button type="button" class="serving-scaler__btn" data-action="scale-up" aria-label="Increase servings">&plus;</button>
+            <button type="button" class="serving-scaler__reset button--ghost" data-action="scale-reset">Reset</button>
+          </div>` : ""}
           <button
             class="inline-edit-trigger recipe-detail-card__editable"
             data-action="inline-edit-field"
@@ -342,8 +367,14 @@ function createRecipeRenderer({
           <button class="button button--secondary" type="button" data-action="duplicate" data-id="${recipe.id}">
             Duplicate
           </button>
+          <button class="button button--secondary" type="button" data-action="share" data-id="${recipe.id}">
+            ${recipe.is_public ? "🔗 Shared" : "Share"}
+          </button>
           <button class="button button--secondary recipe-detail-card__print-button" type="button" onclick="window.print()">
             Print
+          </button>
+          <button class="button button--secondary" type="button" data-action="add-to-shopping" data-id="${recipe.id}">
+            + Shopping List
           </button>
           <button class="button button--danger" type="button" data-action="delete" data-id="${recipe.id}">
             Delete Recipe

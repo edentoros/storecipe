@@ -842,7 +842,269 @@ button:active:not(:disabled) {
     margin-top: $space-sm;
     font-size: 0.9rem;
   }
+}
 
+.serving-scaler {
+  display: flex;
+  align-items: center;
+  gap: $space-xs;
+  margin-bottom: $space-sm;
+  flex-wrap: wrap;
+
+  &__btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #d9e2ec;
+    background: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    min-height: auto;
+    transition: background-color 0.15s;
+
+    &:hover {
+      background-color: #f0f4f8;
+    }
+  }
+
+  &__value {
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 1.5em;
+    text-align: center;
+  }
+
+  &__label {
+    color: $muted;
+    font-size: 0.9rem;
+  }
+
+  &__reset {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+    min-height: auto;
+    margin: 0;
+  }
+}
+
+/* ─── Modal & Shopping List ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-md;
+}
+
+.modal {
+  background: #fff;
+  border-radius: $radius;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  max-width: 560px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-md $space-md;
+    border-bottom: 1px solid #e4e7eb;
+
+    h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+  }
+
+  &__body {
+    padding: $space-md;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  &__footer {
+    display: flex;
+    gap: $space-sm;
+    justify-content: flex-end;
+    padding: $space-sm $space-md;
+    border-top: 1px solid #e4e7eb;
+  }
+}
+
+.shopping-list {
+  &__recipes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-xs;
+    margin-bottom: $space-md;
+  }
+
+  &__recipe-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #e4e7eb;
+    border-radius: 20px;
+    padding: 0.3rem 0.6rem 0.3rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  &__remove-recipe {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: $text-muted;
+    padding: 0;
+    line-height: 1;
+
+    &:hover {
+      color: $danger;
+    }
+  }
+
+  &__items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  &__item {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f0f4f8;
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: $space-xs;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    input[type="checkbox"]:checked + span {
+      text-decoration: line-through;
+      color: $text-muted;
+    }
+  }
+}
+
+/* ─── Meal Planner ─── */
+.meal-planner-modal {
+  max-width: 720px;
+}
+
+.meal-planner {
+  &__week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $space-md;
+  }
+
+  &__week-label {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $space-xs;
+  }
+
+  &__day {
+    border: 1px solid #e4e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  &__day-header {
+    padding: 0.4rem $space-sm;
+    background: #f0f4f8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9rem;
+
+    small {
+      color: $muted;
+    }
+  }
+
+  &__day-meals {
+    padding: 0.4rem $space-sm;
+    min-height: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  &__empty {
+    color: #9fb3c8;
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  &__meal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-xs;
+    padding: 0.25rem $space-xs;
+    background: #e8f0fe;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  &__meal-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__remove-meal {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: $muted;
+    padding: 0;
+    line-height: 1;
+    min-height: auto;
+
+    &:hover {
+      color: $danger;
+    }
+  }
+
+  &__recipe-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $space-xs;
+    margin-top: $space-md;
+    font-size: 0.9rem;
+
+    select {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+}
+
+.recipe-detail-card {
   .recipe-detail-card__actions {
     display: flex;
     flex-wrap: wrap;
@@ -1254,6 +1516,83 @@ body.theme-dark {
     border-color: #6b2e2e;
   }
 
+  .serving-scaler__btn {
+    background: #1a2d42;
+    border-color: #334e68;
+    color: #e4edf6;
+
+    &:hover {
+      background-color: #243b53;
+    }
+  }
+
+  .modal-overlay {
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  .modal {
+    background: $dark-panel;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  .modal__header {
+    border-color: $dark-border;
+  }
+
+  .modal__footer {
+    border-color: $dark-border;
+  }
+
+  .shopping-list__recipe-tag {
+    background: $dark-input-focus;
+    color: #e4edf6;
+  }
+
+  .shopping-list__remove-recipe {
+    color: #9fb3c8;
+
+    &:hover {
+      color: $dark-danger;
+    }
+  }
+
+  .shopping-list__item {
+    border-color: $dark-input-focus;
+
+    input[type="checkbox"]:checked + span {
+      color: $dark-text-muted;
+    }
+  }
+
+  .meal-planner__day {
+    border-color: $dark-border;
+  }
+
+  .meal-planner__day-header {
+    background: #1a2d42;
+
+    small {
+      color: #9fb3c8;
+    }
+  }
+
+  .meal-planner__empty {
+    color: $dark-text-muted;
+  }
+
+  .meal-planner__meal {
+    background: $dark-input-focus;
+    color: #e4edf6;
+  }
+
+  .meal-planner__remove-meal {
+    color: #9fb3c8;
+
+    &:hover {
+      color: $dark-danger;
+    }
+  }
+
   .auth-signed-email {
     color: #9fb3c8;
   }
@@ -1442,6 +1781,8 @@ body.theme-dark {
   #closeDetail,
   .toast-container,
   .settings-backdrop,
+  .modal-overlay,
+  .serving-scaler,
   .recipe-detail-card__actions,
   .recipe-detail-card__fav-button,
   .recipe-detail-card__add-notes,

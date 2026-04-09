@@ -43,6 +43,7 @@
     validateImageFile,
     debounce
   } = window.StorecipeHelpers;
+  const { scaleIngredients } = window.StorecipeIngredientParser;
   const { createImportPromptManager } = window.StorecipeImportPromptManager;
   const { createRecipeMetaManager } = window.StorecipeRecipeMetaManager;
   const { createRecipeRenderer } = window.StorecipeRecipeRenderer;
@@ -120,6 +121,25 @@
     recipeDetail,
     detailContent,
     closeDetail,
+    openShoppingList,
+    shoppingListModal,
+    closeShoppingList,
+    shoppingListEmpty,
+    shoppingListRecipes,
+    shoppingListItems,
+    clearShoppingList,
+    copyShoppingList,
+    openMealPlanner,
+    mealPlannerModal,
+    closeMealPlanner,
+    mealPlannerPrevWeek,
+    mealPlannerNextWeek,
+    mealPlannerWeekLabel,
+    mealPlannerGrid,
+    mealPlannerRecipeSelect,
+    mealPlannerDaySelect,
+    mealPlannerAddBtn,
+    clearMealPlanner,
     addButtonWideQuery
   } = getDomRefs();
 
@@ -176,7 +196,9 @@
     importRecipeFromUrlViaFunction,
     uploadImage,
     readFileAsDataUrl,
-    getSignedImageUrl
+    getSignedImageUrl,
+    toggleRecipePublicViaRest,
+    fetchPublicRecipeViaRest
   } = supabaseServices;
   const durationDigitInputs = [prepHoursInput, prepMinutesInput, cookHoursInput, cookMinutesInput].filter(Boolean);
 
@@ -593,7 +615,8 @@
       parseDurationText,
       formatDuration,
       getDisplayImageUrl,
-      getDirectImageUrl
+      getDirectImageUrl,
+      scaleIngredients
     },
     getSignedImageUrl,
     setDetailOpen,
@@ -1628,6 +1651,352 @@
     }
   }
 
+  async function addGalleryImage(recipeId, imageUrl) {
+    const recipe = state.recipes.find((r) => r.id === recipeId);
+    if (!recipe || !imageUrl) return;
+    let gallery = [];
+    try { gallery = JSON.parse(recipe.gallery_images || "[]"); } catch (_) { /* ignore */ }
+    gallery.push(imageUrl);
+    recipe.gallery_images = JSON.stringify(gallery);
+    if (hasSupabaseConfig && state.currentUser) {
+      try {
+        await updateRecipeViaRest(recipeId, state.currentUser.id, { gallery_images: recipe.gallery_images });
+      } catch (err) {
+        if (err?.message?.includes("column") || err?.message?.includes("gallery_images")) {
+          setAppStatus("Gallery requires a DB column. Run: ALTER TABLE recipes ADD COLUMN gallery_images text;");
+          return;
+        }
+        logSupabaseError("add gallery image", err);
+      }
+    } else {
+      saveLocalRecipes(state.recipes);
+    }
+    showDetail(recipe, { scrollToDetail: false });
+    setAppStatus("Image added to gallery.");
+  }
+
+  async function toggleShareRecipe(recipeId) {
+    const recipe = state.recipes.find((item) => item.id === recipeId);
+    if (!recipe) return;
+
+    if (!hasSupabaseConfig || !state.currentUser) {
+      const localToken = recipe.share_token || crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+      recipe.is_public = !recipe.is_public;
+      recipe.share_token = recipe.is_public ? localToken : null;
+      saveLocalRecipes(state.recipes);
+      if (recipe.is_public) {
+        const url = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}share.html?token=${recipe.share_token}`;
+        try { await navigator.clipboard.writeText(url); } catch (_) { /* ignore */ }
+        setAppStatus("Share link copied to clipboard!");
+      } else {
+        setAppStatus("Recipe is no longer shared.");
+      }
+      showDetail(recipe, { scrollToDetail: false });
+      return;
+    }
+
+    const makePublic = !recipe.is_public;
+    try {
+      const data = await toggleRecipePublicViaRest(recipeId, state.currentUser.id, makePublic);
+      const updated = Array.isArray(data) ? data[0] : data;
+      if (updated) {
+        recipe.is_public = updated.is_public;
+        recipe.share_token = updated.share_token;
+      }
+      if (recipe.is_public && recipe.share_token) {
+        const url = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}share.html?token=${recipe.share_token}`;
+        try { await navigator.clipboard.writeText(url); } catch (_) { /* ignore */ }
+        setAppStatus("Share link copied to clipboard!");
+      } else {
+        setAppStatus("Recipe is no longer shared.");
+      }
+    } catch (error) {
+      if (error?.message?.includes("column") || error?.message?.includes("is_public") || error?.message?.includes("share_token")) {
+        state.hasShareColumns = false;
+        setAppStatus("Sharing requires database columns. Run the SQL migration.");
+      } else {
+        logSupabaseError("toggle share", error);
+        setAppStatus("Could not toggle sharing.");
+      }
+    }
+    showDetail(recipe, { scrollToDetail: false });
+  }
+
+  /* ─── Shopping List ─── */
+
+  function renderShoppingList() {
+    const selectedRecipes = state.shoppingListRecipeIds
+      .map((id) => state.recipes.find((r) => r.id === id))
+      .filter(Boolean);
+
+    if (!selectedRecipes.length) {
+      shoppingListEmpty.classList.remove("hidden");
+      shoppingListRecipes.classList.add("hidden");
+      shoppingListItems.classList.add("hidden");
+      return;
+    }
+    shoppingListEmpty.classList.add("hidden");
+    shoppingListRecipes.classList.remove("hidden");
+    shoppingListItems.classList.remove("hidden");
+
+    shoppingListRecipes.innerHTML = selectedRecipes.map((r) =>
+      `<div class="shopping-list__recipe-tag">
+        <span>${escapeHtml(r.title)}</span>
+        <button type="button" class="shopping-list__remove-recipe" data-id="${r.id}" aria-label="Remove ${escapeHtml(r.title)}">&times;</button>
+      </div>`
+    ).join("");
+
+    const { parseIngredientLine } = window.StorecipeIngredientParser;
+    const aggregated = new Map();
+
+    for (const recipe of selectedRecipes) {
+      const lines = String(recipe.ingredients || "").split("\n").map((l) => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        const parsed = parseIngredientLine(line);
+        const key = `${(parsed.unit || "").toLowerCase()}|${parsed.name.toLowerCase()}`;
+        if (aggregated.has(key)) {
+          const existing = aggregated.get(key);
+          if (parsed.quantity !== null && existing.quantity !== null) {
+            existing.quantity += parsed.quantity;
+          }
+        } else {
+          aggregated.set(key, { ...parsed });
+        }
+      }
+    }
+
+    const { decimalToFraction } = window.StorecipeIngredientParser;
+    shoppingListItems.innerHTML = "";
+    for (const [, item] of aggregated) {
+      const li = document.createElement("li");
+      li.className = "shopping-list__item";
+      const qtyText = item.quantity !== null ? decimalToFraction(item.quantity) : "";
+      const unitText = item.unit || "";
+      li.innerHTML = `<label><input type="checkbox" class="shopping-list__check" /><span>${escapeHtml(`${qtyText} ${unitText} ${item.name}`.trim())}</span></label>`;
+      shoppingListItems.appendChild(li);
+    }
+  }
+
+  function openShoppingListModal() {
+    renderShoppingList();
+    shoppingListModal.classList.remove("hidden");
+    shoppingListModal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeShoppingListModal() {
+    shoppingListModal.classList.add("hidden");
+    shoppingListModal.setAttribute("aria-hidden", "true");
+  }
+
+  function addToShoppingList(recipeId) {
+    if (!state.shoppingListRecipeIds.includes(recipeId)) {
+      state.shoppingListRecipeIds.push(recipeId);
+    }
+    openShoppingListModal();
+    setAppStatus("Recipe added to shopping list.");
+  }
+
+  if (openShoppingList) {
+    openShoppingList.addEventListener("click", openShoppingListModal);
+  }
+  if (closeShoppingList) {
+    closeShoppingList.addEventListener("click", closeShoppingListModal);
+  }
+  if (shoppingListModal) {
+    shoppingListModal.addEventListener("click", (e) => {
+      if (e.target === shoppingListModal) closeShoppingListModal();
+    });
+  }
+  if (clearShoppingList) {
+    clearShoppingList.addEventListener("click", () => {
+      state.shoppingListRecipeIds = [];
+      renderShoppingList();
+    });
+  }
+  if (copyShoppingList) {
+    copyShoppingList.addEventListener("click", async () => {
+      const items = shoppingListItems.querySelectorAll(".shopping-list__item");
+      const lines = Array.from(items).map((li) => {
+        const checkbox = li.querySelector("input[type='checkbox']");
+        const text = li.querySelector("span")?.textContent || "";
+        return checkbox?.checked ? `✓ ${text}` : `☐ ${text}`;
+      });
+      if (!lines.length) return;
+      try {
+        await navigator.clipboard.writeText(lines.join("\n"));
+        setAppStatus("Shopping list copied to clipboard!");
+      } catch (_) {
+        setAppStatus("Could not copy to clipboard.");
+      }
+    });
+  }
+  if (shoppingListRecipes) {
+    shoppingListRecipes.addEventListener("click", (e) => {
+      const btn = e.target.closest(".shopping-list__remove-recipe");
+      if (!btn) return;
+      const id = btn.dataset.id;
+      state.shoppingListRecipeIds = state.shoppingListRecipeIds.filter((rid) => rid !== id);
+      renderShoppingList();
+    });
+  }
+
+  /* ─── Meal Planner ─── */
+  const MEAL_PLAN_KEY = "storecipe_meal_plan";
+  const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  let mealPlannerWeekOffset = 0;
+
+  function getMondayOfWeek(offset) {
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday + offset * 7);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  }
+
+  function getWeekKey(offset) {
+    const mon = getMondayOfWeek(offset);
+    return `${mon.getFullYear()}-W${String(Math.ceil(((mon - new Date(mon.getFullYear(), 0, 1)) / 86400000 + 1) / 7)).padStart(2, "0")}`;
+  }
+
+  function loadMealPlan() {
+    try {
+      return JSON.parse(localStorage.getItem(MEAL_PLAN_KEY) || "{}");
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveMealPlan(plan) {
+    localStorage.setItem(MEAL_PLAN_KEY, JSON.stringify(plan));
+  }
+
+  function renderMealPlanner() {
+    const monday = getMondayOfWeek(mealPlannerWeekOffset);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const fmt = (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    if (mealPlannerWeekLabel) {
+      mealPlannerWeekLabel.textContent = `${fmt(monday)} – ${fmt(sunday)}`;
+    }
+
+    const weekKey = getWeekKey(mealPlannerWeekOffset);
+    const plan = loadMealPlan();
+    const weekPlan = plan[weekKey] || {};
+
+    if (mealPlannerGrid) {
+      mealPlannerGrid.innerHTML = DAY_NAMES.map((dayName, i) => {
+        const dayDate = new Date(monday);
+        dayDate.setDate(monday.getDate() + i);
+        const dateStr = dayDate.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+        const meals = weekPlan[i] || [];
+        const mealsHtml = meals.map((recipeId, mealIdx) => {
+          const recipe = state.recipes.find((r) => r.id === recipeId);
+          const title = recipe ? escapeHtml(recipe.title) : "Unknown recipe";
+          return `<div class="meal-planner__meal">
+            <span class="meal-planner__meal-title">${title}</span>
+            <button type="button" class="meal-planner__remove-meal" data-day="${i}" data-meal-idx="${mealIdx}" aria-label="Remove">&times;</button>
+          </div>`;
+        }).join("");
+        return `<div class="meal-planner__day">
+          <div class="meal-planner__day-header">
+            <strong>${dayName}</strong> <small>${dateStr}</small>
+          </div>
+          <div class="meal-planner__day-meals" data-day="${i}">
+            ${mealsHtml || '<span class="meal-planner__empty">No meals planned</span>'}
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    if (mealPlannerRecipeSelect) {
+      const currentVal = mealPlannerRecipeSelect.value;
+      mealPlannerRecipeSelect.innerHTML = '<option value="">-- Pick a recipe --</option>';
+      state.recipes.forEach((r) => {
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        opt.textContent = r.title || "Untitled";
+        mealPlannerRecipeSelect.appendChild(opt);
+      });
+      if (currentVal) mealPlannerRecipeSelect.value = currentVal;
+    }
+  }
+
+  function openMealPlannerModal() {
+    renderMealPlanner();
+    mealPlannerModal.classList.remove("hidden");
+    mealPlannerModal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeMealPlannerModal() {
+    mealPlannerModal.classList.add("hidden");
+    mealPlannerModal.setAttribute("aria-hidden", "true");
+  }
+
+  if (openMealPlanner) {
+    openMealPlanner.addEventListener("click", openMealPlannerModal);
+  }
+  if (closeMealPlanner) {
+    closeMealPlanner.addEventListener("click", closeMealPlannerModal);
+  }
+  if (mealPlannerModal) {
+    mealPlannerModal.addEventListener("click", (e) => {
+      if (e.target === mealPlannerModal) closeMealPlannerModal();
+    });
+  }
+  if (mealPlannerPrevWeek) {
+    mealPlannerPrevWeek.addEventListener("click", () => {
+      mealPlannerWeekOffset--;
+      renderMealPlanner();
+    });
+  }
+  if (mealPlannerNextWeek) {
+    mealPlannerNextWeek.addEventListener("click", () => {
+      mealPlannerWeekOffset++;
+      renderMealPlanner();
+    });
+  }
+  if (mealPlannerAddBtn) {
+    mealPlannerAddBtn.addEventListener("click", () => {
+      const recipeId = mealPlannerRecipeSelect?.value;
+      const dayIdx = mealPlannerDaySelect?.value;
+      if (!recipeId || dayIdx === "" || dayIdx == null) return;
+      const weekKey = getWeekKey(mealPlannerWeekOffset);
+      const plan = loadMealPlan();
+      if (!plan[weekKey]) plan[weekKey] = {};
+      if (!plan[weekKey][dayIdx]) plan[weekKey][dayIdx] = [];
+      plan[weekKey][dayIdx].push(recipeId);
+      saveMealPlan(plan);
+      renderMealPlanner();
+    });
+  }
+  if (clearMealPlanner) {
+    clearMealPlanner.addEventListener("click", () => {
+      const weekKey = getWeekKey(mealPlannerWeekOffset);
+      const plan = loadMealPlan();
+      delete plan[weekKey];
+      saveMealPlan(plan);
+      renderMealPlanner();
+    });
+  }
+  if (mealPlannerGrid) {
+    mealPlannerGrid.addEventListener("click", (e) => {
+      const btn = e.target.closest(".meal-planner__remove-meal");
+      if (!btn) return;
+      const dayIdx = btn.dataset.day;
+      const mealIdx = Number(btn.dataset.mealIdx);
+      const weekKey = getWeekKey(mealPlannerWeekOffset);
+      const plan = loadMealPlan();
+      if (plan[weekKey]?.[dayIdx]) {
+        plan[weekKey][dayIdx].splice(mealIdx, 1);
+        if (!plan[weekKey][dayIdx].length) delete plan[weekKey][dayIdx];
+        saveMealPlan(plan);
+        renderMealPlanner();
+      }
+    });
+  }
+
   toggleAddRecipe.addEventListener("click", () => {
     const shouldShow = addRecipeSection.classList.contains("hidden");
     if (shouldShow && !state.editingRecipeId) {
@@ -1675,6 +2044,32 @@
   inlineEditManager.attachListeners();
 
   detailContent.addEventListener("click", async (event) => {
+    const scaleBtn = event.target.closest("[data-action='scale-down'], [data-action='scale-up'], [data-action='scale-reset']");
+    if (scaleBtn) {
+      const scaler = scaleBtn.closest(".serving-scaler");
+      if (!scaler) return;
+      const origServes = Number(scaler.dataset.originalServes) || 1;
+      const origIngredients = scaler.dataset.originalIngredients || "";
+      const display = scaler.querySelector("[data-scale-display]");
+      if (!display) return;
+      let current = Number(display.textContent) || origServes;
+      const action = scaleBtn.dataset.action;
+      if (action === "scale-down" && current > 1) current--;
+      else if (action === "scale-up" && current < 99) current++;
+      else if (action === "scale-reset") current = origServes;
+      display.textContent = String(current);
+      const section = scaler.closest("[data-field='ingredients']");
+      const contentEl = section?.querySelector("[data-field-content='ingredients']");
+      if (contentEl) {
+        const scaled = scaleIngredients(origIngredients, origServes, current);
+        contentEl.innerHTML = scaled.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
+          const safe = l.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          return safe;
+        }).join("<br />");
+      }
+      return;
+    }
+
     const favTrigger = event.target.closest("button[data-action='toggle-fav']");
     if (favTrigger) {
       const recipeId = favTrigger.dataset.id;
@@ -1720,6 +2115,87 @@
         setAddRecipeOpen(true);
         setAppStatus("Recipe duplicated. Edit and save as a new recipe.");
       }
+      return;
+    }
+
+    const addGalleryBtn = event.target.closest("button[data-action='add-gallery-image']");
+    if (addGalleryBtn) {
+      const fileInput = detailContent.querySelector(".recipe-gallery__file-input");
+      const urlInput = detailContent.querySelector(".recipe-gallery__url-input");
+      if (fileInput) fileInput.classList.toggle("hidden");
+      if (urlInput) urlInput.classList.toggle("hidden");
+      if (fileInput && !fileInput.dataset.listenerAttached) {
+        fileInput.dataset.listenerAttached = "true";
+        fileInput.addEventListener("change", async () => {
+          const file = fileInput.files?.[0];
+          if (!file) return;
+          const recipeId = fileInput.dataset.id;
+          const recipe = state.recipes.find((r) => r.id === recipeId);
+          if (!recipe) return;
+          let imageUrl;
+          if (hasSupabaseConfig && state.currentUser) {
+            try {
+              const path = await uploadImage(file, state.currentUser.id);
+              const signed = await getSignedImageUrl(path);
+              imageUrl = signed || path;
+            } catch (err) {
+              setAppStatus("Gallery image upload failed.");
+              return;
+            }
+          } else {
+            imageUrl = await readFileAsDataUrl(file);
+          }
+          await addGalleryImage(recipeId, imageUrl);
+        });
+      }
+      if (urlInput && !urlInput.dataset.listenerAttached) {
+        urlInput.dataset.listenerAttached = "true";
+        urlInput.addEventListener("keydown", async (e) => {
+          if (e.key !== "Enter") return;
+          const url = urlInput.value.trim();
+          if (!url || !isValidHttpUrl(url)) { setAppStatus("Enter a valid image URL."); return; }
+          const recipeId = urlInput.dataset.id;
+          await addGalleryImage(recipeId, url);
+          urlInput.value = "";
+        });
+      }
+      return;
+    }
+
+    const removeGalleryBtn = event.target.closest("button[data-action='remove-gallery-image']");
+    if (removeGalleryBtn) {
+      const recipeId = removeGalleryBtn.dataset.id;
+      const idx = Number(removeGalleryBtn.dataset.idx);
+      const recipe = state.recipes.find((r) => r.id === recipeId);
+      if (!recipe) return;
+      let gallery = [];
+      try { gallery = JSON.parse(recipe.gallery_images || "[]"); } catch (_) { /* ignore */ }
+      gallery.splice(idx, 1);
+      recipe.gallery_images = JSON.stringify(gallery);
+      if (hasSupabaseConfig && state.currentUser) {
+        try {
+          await updateRecipeViaRest(recipeId, state.currentUser.id, { gallery_images: recipe.gallery_images });
+        } catch (err) {
+          logSupabaseError("remove gallery image", err);
+        }
+      } else {
+        saveLocalRecipes(state.recipes);
+      }
+      showDetail(recipe, { scrollToDetail: false });
+      return;
+    }
+
+    const shareButton = event.target.closest("button[data-action='share']");
+    if (shareButton) {
+      const recipeId = shareButton.dataset.id;
+      if (recipeId) await toggleShareRecipe(recipeId);
+      return;
+    }
+
+    const shoppingButton = event.target.closest("button[data-action='add-to-shopping']");
+    if (shoppingButton) {
+      const recipeId = shoppingButton.dataset.id;
+      if (recipeId) addToShoppingList(recipeId);
       return;
     }
 

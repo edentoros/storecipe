@@ -322,6 +322,60 @@ function createSupabaseServices({ config, state, helpers }) {
     }
   }
 
+  async function toggleRecipePublicViaRest(recipeId, userId, makePublic) {
+    const accessToken = getAccessToken();
+    const shareToken = makePublic ? crypto.randomUUID().replace(/-/g, "").slice(0, 16) : null;
+    const query = new URLSearchParams({
+      id: `eq.${recipeId}`,
+      user_id: `eq.${userId}`
+    });
+    const response = await debugFetch(`${SUPABASE_URL}/rest/v1/recipes?${query.toString()}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation"
+      },
+      body: JSON.stringify({ is_public: makePublic, share_token: shareToken })
+    });
+
+    const data = await parseResponse(response, null);
+    if (!response.ok) {
+      const message =
+        typeof data === "object" && data && "message" in data
+          ? data.message
+          : `Share toggle failed with status ${response.status}`;
+      throw new Error(message);
+    }
+    return data;
+  }
+
+  async function fetchPublicRecipeViaRest(shareToken) {
+    const query = new URLSearchParams({
+      select: "*",
+      share_token: `eq.${shareToken}`,
+      is_public: "eq.true",
+      limit: "1"
+    });
+    const response = await debugFetch(`${SUPABASE_URL}/rest/v1/recipes?${query.toString()}`, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY
+      }
+    });
+
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message =
+        typeof data === "object" && data && "message" in data
+          ? data.message
+          : `Public recipe fetch failed with status ${response.status}`;
+      throw new Error(message);
+    }
+    return Array.isArray(data) && data.length > 0 ? data[0] : null;
+  }
+
   return {
     hasSupabaseConfig,
     client,
@@ -334,7 +388,9 @@ function createSupabaseServices({ config, state, helpers }) {
     importRecipeFromUrlViaFunction,
     uploadImage,
     readFileAsDataUrl,
-    getSignedImageUrl
+    getSignedImageUrl,
+    toggleRecipePublicViaRest,
+    fetchPublicRecipeViaRest
   };
 }
 
