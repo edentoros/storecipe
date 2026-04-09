@@ -1680,18 +1680,7 @@
     if (!recipe) return;
 
     if (!hasSupabaseConfig || !state.currentUser) {
-      const localToken = recipe.share_token || crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-      recipe.is_public = !recipe.is_public;
-      recipe.share_token = recipe.is_public ? localToken : null;
-      saveLocalRecipes(state.recipes);
-      if (recipe.is_public) {
-        const url = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}share.html?token=${recipe.share_token}`;
-        try { await navigator.clipboard.writeText(url); } catch (_) { /* ignore */ }
-        setAppStatus("Share link copied to clipboard!");
-      } else {
-        setAppStatus("Recipe is no longer shared.");
-      }
-      showDetail(recipe, { scrollToDetail: false });
+      setAppStatus("Sharing requires a Supabase connection and sign-in.");
       return;
     }
 
@@ -1841,7 +1830,11 @@
   }
 
   /* ─── Meal Planner ─── */
-  const MEAL_PLAN_KEY = "storecipe_meal_plan";
+  const MEAL_PLAN_KEY_PREFIX = "storecipe_meal_plan";
+  function getMealPlanKey() {
+    const uid = state.currentUser?.id || "local";
+    return `${MEAL_PLAN_KEY_PREFIX}_${uid}`;
+  }
   const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   let mealPlannerWeekOffset = 0;
 
@@ -1862,14 +1855,14 @@
 
   function loadMealPlan() {
     try {
-      return JSON.parse(localStorage.getItem(MEAL_PLAN_KEY) || "{}");
+      return JSON.parse(localStorage.getItem(getMealPlanKey()) || "{}");
     } catch (_) {
       return {};
     }
   }
 
   function saveMealPlan(plan) {
-    localStorage.setItem(MEAL_PLAN_KEY, JSON.stringify(plan));
+    localStorage.setItem(getMealPlanKey(), JSON.stringify(plan));
   }
 
   function renderMealPlanner() {
@@ -2232,6 +2225,8 @@
         state.isSettingsOpen = false;
         resetRecipeFormState();
         setTheme(DEFAULT_THEME, { persistForCurrentUser: false });
+        mealPlannerWeekOffset = 0;
+        state.shoppingListRecipeIds = [];
       }
       loadImportPrompt();
     } else if (justSignedIn || switchedUser || authEvent === "USER_UPDATED" || authEvent === "INITIAL_SESSION") {

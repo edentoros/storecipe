@@ -24,8 +24,6 @@
     </main>
 
     <script src="src/js/core/config.js" onerror="this.remove()"></script>
-    <script defer src="src/js/core/constants.js"></script>
-    <script defer src="src/js/core/helpers.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
         const params = new URLSearchParams(window.location.search);
@@ -45,6 +43,9 @@
           container.innerHTML = '<p class="empty">Supabase not configured. Cannot load shared recipe.</p>';
           return;
         }
+
+        const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const nl2br = (s) => esc(s).replace(/\n/g, "<br />");
 
         try {
           const query = new URLSearchParams({
@@ -68,9 +69,6 @@
             return;
           }
 
-          const esc = (s) => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-          const nl2br = (s) => esc(s).replace(/\n/g, "<br />");
-
           const prepTime = recipe.prep_time || recipe.prepTime || "";
           const cookTime = recipe.cooking_time || recipe.cookingTime || "";
           const totalTime = recipe.total_time || "";
@@ -82,7 +80,7 @@
             cookTime ? `<p><strong>Cook:</strong> ${esc(cookTime)}</p>` : "",
             totalTime ? `<p><strong>Total:</strong> ${esc(totalTime)}</p>` : "",
             serves ? `<p><strong>Serves:</strong> ${esc(serves)}</p>` : "",
-            difficulty ? `<p><strong>Difficulty:</strong> ${esc(difficulty)}/10</p>` : ""
+            difficulty ? `<p><strong>Difficulty:</strong> ${esc(difficulty)}</p>` : ""
           ].filter(Boolean).join("\n");
 
           const categoryBadge = recipe.category
@@ -119,7 +117,7 @@
           `;
 
         } catch (error) {
-          container.innerHTML = `<p class="empty">Error loading recipe: ${error.message || "Unknown error"}</p>`;
+          container.innerHTML = `<p class="empty">Error loading recipe: ${esc(error.message || "Unknown error")}</p>`;
         }
       });
     </script>
