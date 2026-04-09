@@ -89,7 +89,8 @@ function createSupabaseServices({ config, state, helpers }) {
 
   async function upsertThemePreferenceViaRest(userId, theme) {
     const accessToken = getAccessToken();
-    const normalizedTheme = String(theme).toLowerCase() === "dark" ? "dark" : "light";
+    const t = String(theme).toLowerCase();
+    const normalizedTheme = t === "dark" ? "dark" : t === "sunset" ? "sunset" : "light";
     const response = await debugFetch(`${SUPABASE_URL}/rest/v1/${THEME_PREFERENCES_TABLE}?on_conflict=user_id`, {
       method: "POST",
       headers: {

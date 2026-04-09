@@ -17,7 +17,10 @@ function normalizeDifficulty(value, defaultDifficulty) {
 }
 
 function normalizeTheme(value) {
-  return String(value).toLowerCase() === "dark" ? "dark" : "light";
+  const v = String(value).toLowerCase();
+  if (v === "dark") return "dark";
+  if (v === "sunset") return "sunset";
+  return "light";
 }
 
 async function withTimeout(promise, ms, label) {

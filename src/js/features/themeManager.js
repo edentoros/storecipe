@@ -9,20 +9,59 @@
       return `${THEME_LOCAL_KEY_PREFIX}${userId}`;
     }
 
+    const THEME_LABELS = { light: "Theme: Light", dark: "Theme: Dark", sunset: "Theme: Sunset" };
+    const SUNSET_START_HOUR = 19;
+    const SUNSET_END_HOUR = 7;
+    let sunsetTimerId = null;
+
+    function isSunsetDark() {
+      const hour = new Date().getHours();
+      return hour >= SUNSET_START_HOUR || hour < SUNSET_END_HOUR;
+    }
+
     function updateThemeToggleUi() {
       if (!themeToggleButton) return;
-      const isDarkTheme = state.currentTheme === "dark";
-      themeToggleButton.textContent = isDarkTheme ? "Dark theme: On" : "Dark theme: Off";
-      themeToggleButton.setAttribute("aria-pressed", isDarkTheme ? "true" : "false");
+      const label = THEME_LABELS[state.currentTheme] || THEME_LABELS.light;
+      themeToggleButton.textContent = label;
+      const isPressed = state.currentTheme === "dark" || (state.currentTheme === "sunset" && isSunsetDark());
+      themeToggleButton.setAttribute("aria-pressed", isPressed ? "true" : "false");
     }
 
     const ANONYMOUS_THEME_KEY = `${THEME_LOCAL_KEY_PREFIX}anonymous`;
+
+    function applySunsetCheck() {
+      const shouldBeDark = isSunsetDark();
+      document.body.classList.toggle("theme-dark", shouldBeDark);
+    }
+
+    function startSunsetTimer() {
+      stopSunsetTimer();
+      applySunsetCheck();
+      sunsetTimerId = window.setInterval(() => {
+        if (state.currentTheme === "sunset") {
+          applySunsetCheck();
+        }
+      }, 60 * 1000);
+    }
+
+    function stopSunsetTimer() {
+      if (sunsetTimerId !== null) {
+        window.clearInterval(sunsetTimerId);
+        sunsetTimerId = null;
+      }
+    }
 
     function setTheme(theme, options = {}) {
       const { persistForCurrentUser = true } = options;
       const normalizedTheme = normalizeTheme(theme);
       state.currentTheme = normalizedTheme;
-      document.body.classList.toggle("theme-dark", normalizedTheme === "dark");
+
+      if (normalizedTheme === "sunset") {
+        startSunsetTimer();
+      } else {
+        stopSunsetTimer();
+        document.body.classList.toggle("theme-dark", normalizedTheme === "dark");
+      }
       updateThemeToggleUi();
 
       if (persistForCurrentUser) {

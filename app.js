@@ -1290,7 +1290,8 @@
 
   if (themeToggleButton) {
     themeToggleButton.addEventListener("click", async () => {
-      const nextTheme = state.currentTheme === "dark" ? "light" : "dark";
+      const cycle = { light: "dark", dark: "sunset", sunset: "light" };
+      const nextTheme = cycle[state.currentTheme] || "light";
       setTheme(nextTheme);
       if (state.currentUser) {
         themeToggleButton.disabled = true;
@@ -2047,8 +2048,8 @@
       if (!display) return;
       let current = Number(display.textContent) || origServes;
       const action = scaleBtn.dataset.action;
-      if (action === "scale-down" && current > 1) current--;
-      else if (action === "scale-up" && current < 99) current++;
+      if (action === "scale-down" && current > 2) current -= 2;
+      else if (action === "scale-up" && current < 98) current += 2;
       else if (action === "scale-reset") current = origServes;
       display.textContent = String(current);
       const section = scaler.closest("[data-field='ingredients']");
