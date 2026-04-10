@@ -148,6 +148,34 @@ body {
   position: relative;
   z-index: 210;
 }
+.app__header-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.app__tool-button {
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  min-height: 40px;
+  font-size: 0.92rem;
+}
+.app__tool-button-label {
+  display: inline;
+}
+@media (max-width: 560px) {
+  .app__tool-button {
+    padding: 0.5rem 0.65rem;
+    font-size: 1.1rem;
+  }
+  .app__tool-button-label {
+    display: none;
+  }
+}
 .panel {
   background: #fffdf9;
   border-radius: 14px;
