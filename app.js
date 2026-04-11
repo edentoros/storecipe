@@ -320,7 +320,7 @@
     dom: {
       authStatus, authLoading, authLoadingText, authEmail, authPassword,
       signInButton, signUpButton, signOutButton, themeToggleButton, signedInEmail,
-      authEmailLabel, authPasswordLabel, authPanel, settingsButton, closeSettingsButton,
+      authEmailLabel, authPasswordLabel, authPanel, settingsButton, openShoppingList, openMealPlanner, closeSettingsButton,
       settingsBackdrop, recipeListLoading, recipeList, appStatus, toastContainer
     },
     state,
