@@ -626,8 +626,31 @@
     logSupabaseError
   });
   const renderList = recipeRenderer.renderList;
-  const showDetail = recipeRenderer.showDetail;
+  const rawShowDetail = recipeRenderer.showDetail;
   const hydrateImagesInBackground = recipeRenderer.hydrateImagesInBackground;
+
+  let suppressUrlUpdate = false;
+  function pushRecipeUrl(recipeId) {
+    if (suppressUrlUpdate || !recipeId) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("recipe") === String(recipeId)) return;
+    params.set("recipe", String(recipeId));
+    const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+    window.history.pushState({ recipeId: String(recipeId) }, "", newUrl);
+  }
+  function clearRecipeUrl() {
+    if (suppressUrlUpdate) return;
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("recipe")) return;
+    params.delete("recipe");
+    const query = params.toString();
+    const newUrl = `${window.location.pathname}${query ? "?" + query : ""}${window.location.hash}`;
+    window.history.pushState({ recipeId: null }, "", newUrl);
+  }
+  function showDetail(recipe, options = {}) {
+    rawShowDetail(recipe, options);
+    if (recipe && recipe.id) pushRecipeUrl(recipe.id);
+  }
 
   function updateFilterVisibility() {
     const recipes = Array.isArray(state.recipes) ? state.recipes : [];
@@ -1009,6 +1032,7 @@
 
     setAppStatus("Recipe deleted.");
     setDetailOpen(false);
+    clearRecipeUrl();
     await loadRecipes();
   }
 
@@ -2295,6 +2319,28 @@
 
   closeDetail.addEventListener("click", () => {
     setDetailOpen(false);
+    clearRecipeUrl();
+  });
+
+  window.addEventListener("popstate", (event) => {
+    const targetId = event.state?.recipeId
+      || new URLSearchParams(window.location.search).get("recipe")
+      || null;
+    suppressUrlUpdate = true;
+    try {
+      if (targetId) {
+        const recipe = state.recipes.find((item) => String(item.id) === String(targetId));
+        if (recipe) {
+          showDetail(recipe, { scrollToDetail: false });
+        } else {
+          setDetailOpen(false);
+        }
+      } else {
+        setDetailOpen(false);
+      }
+    } finally {
+      suppressUrlUpdate = false;
+    }
   });
 
   async function applyAuthSession(event, session) {
@@ -2334,7 +2380,12 @@
       setRecipeUiEnabled(Boolean(state.currentUser));
     }
 
-    if (justSignedIn || switchedUser) {
+    if (switchedUser) {
+      showListView();
+      recipeDetail.classList.add("hidden");
+      detailContent.innerHTML = "";
+      clearRecipeUrl();
+    } else if (justSignedIn) {
       showListView();
       recipeDetail.classList.add("hidden");
       detailContent.innerHTML = "";
@@ -2352,6 +2403,19 @@
       const draft = loadDraft();
       if (draft && state.currentUser) {
         restoreDraft(draft);
+      }
+
+      const requestedRecipeId = new URLSearchParams(window.location.search).get("recipe");
+      if (requestedRecipeId && state.currentUser) {
+        const recipe = state.recipes.find((item) => String(item.id) === String(requestedRecipeId));
+        if (recipe) {
+          suppressUrlUpdate = true;
+          try {
+            showDetail(recipe, { scrollToDetail: false });
+          } finally {
+            suppressUrlUpdate = false;
+          }
+        }
       }
     }
   }
