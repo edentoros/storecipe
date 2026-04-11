@@ -53,15 +53,26 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(400, { error: "Missing or invalid url" });
   }
 
+  const browserHeaders: Record<string, string> = {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    Referer: `${target.protocol}//${target.host}/`
+  };
+
+  async function fetchUpstream(headers: Record<string, string>) {
+    return await fetch(target.toString(), { headers, redirect: "follow" });
+  }
+
   let upstream: Response;
   try {
-    upstream = await fetch(target.toString(), {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; StorecipeImageProxy/1.0)",
-        Accept: "image/*"
-      },
-      redirect: "follow"
-    });
+    upstream = await fetchUpstream(browserHeaders);
+    if (upstream.status === 401 || upstream.status === 403) {
+      // Some hosts block any Referer; retry without it.
+      const { Referer: _omit, ...noReferer } = browserHeaders;
+      upstream = await fetchUpstream(noReferer);
+    }
   } catch (error) {
     return jsonResponse(502, { error: `Fetch failed: ${(error as Error).message}` });
   }
