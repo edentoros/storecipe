@@ -250,7 +250,11 @@ function createSupabaseServices({ config, state, helpers }) {
       let message = `Image fetch failed with status ${response.status}`;
       try {
         const data = await response.json();
-        if (data && typeof data === "object" && "error" in data) message = data.error;
+        if (data && typeof data === "object") {
+          if ("error" in data && data.error) message = String(data.error);
+          else if ("message" in data && data.message) message = String(data.message);
+          else if ("msg" in data && data.msg) message = String(data.msg);
+        }
       } catch (_error) {
         // ignore
       }
