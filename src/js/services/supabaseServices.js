@@ -228,6 +228,49 @@ function createSupabaseServices({ config, state, helpers }) {
     return data;
   }
 
+  async function fetchExternalImageAsFile(imageUrl) {
+    if (!hasSupabaseConfig) {
+      throw new Error("Image preservation needs a configured Supabase project.");
+    }
+    const trimmed = String(imageUrl || "").trim();
+    if (!trimmed) throw new Error("Missing image URL.");
+
+    const accessToken = getAccessToken();
+    const response = await debugFetch(`${SUPABASE_URL}/functions/v1/image-proxy`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ url: trimmed })
+    });
+
+    if (!response.ok) {
+      let message = `Image fetch failed with status ${response.status}`;
+      try {
+        const data = await response.json();
+        if (data && typeof data === "object" && "error" in data) message = data.error;
+      } catch (_error) {
+        // ignore
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const contentType = (blob.type || "image/jpeg").toLowerCase();
+    const extensionMap = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/gif": "gif",
+      "image/webp": "webp",
+      "image/svg+xml": "svg"
+    };
+    const extension = extensionMap[contentType] || "jpg";
+    const fileName = `imported-${Date.now()}.${extension}`;
+    return new File([blob], fileName, { type: contentType });
+  }
+
   async function uploadImage(file, userId) {
     const extension = file.name.split(".").pop() || "jpg";
     const filePath = `${userId}/${crypto.randomUUID()}.${extension}`;
@@ -388,6 +431,7 @@ function createSupabaseServices({ config, state, helpers }) {
     fetchRecipesViaRest,
     importRecipeFromUrlViaFunction,
     uploadImage,
+    fetchExternalImageAsFile,
     readFileAsDataUrl,
     getSignedImageUrl,
     toggleRecipePublicViaRest,

@@ -195,6 +195,7 @@
     fetchRecipesViaRest,
     importRecipeFromUrlViaFunction,
     uploadImage,
+    fetchExternalImageAsFile,
     readFileAsDataUrl,
     getSignedImageUrl,
     toggleRecipePublicViaRest,
@@ -735,7 +736,15 @@
 
     let imagePath = null;
     if (imageUrlValue) {
-      imagePath = imageUrlValue;
+      try {
+        setAppStatus("Fetching image from URL...");
+        const fetchedFile = await fetchExternalImageAsFile(imageUrlValue);
+        imagePath = await uploadImage(fetchedFile, state.currentUser.id);
+      } catch (error) {
+        logSupabaseError("image url fetch", error);
+        setAppStatus(`Image fetch failed: ${error.message || "Unexpected error"}`);
+        return;
+      }
     } else if (image instanceof File && image.size > 0) {
       try {
         imagePath = await uploadImage(image, state.currentUser.id);
@@ -881,7 +890,16 @@
         return;
       }
     } else if (selectedImageUrl) {
-      nextImagePath = selectedImageUrl;
+      try {
+        setAppStatus("Fetching image from URL...");
+        const fetchedFile = await fetchExternalImageAsFile(selectedImageUrl);
+        nextImagePath = await uploadImage(fetchedFile, state.currentUser.id);
+        uploadedNewImage = true;
+      } catch (error) {
+        logSupabaseError("image url fetch", error);
+        setAppStatus(`Image fetch failed: ${error.message || "Unexpected error"}`);
+        return;
+      }
     } else if (removeCurrentImage) {
       nextImagePath = null;
     }
