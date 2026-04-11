@@ -40,6 +40,8 @@ function createRecipeRenderer({
     image.src = recipe._resolvedImageUrl;
     image.alt = String(recipe.title ?? "Recipe image");
     image.loading = "lazy";
+    image.dataset.action = "view";
+    image.dataset.id = recipe.id;
     placeholder.replaceWith(image);
   }
 
