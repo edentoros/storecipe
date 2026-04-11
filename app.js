@@ -1696,30 +1696,6 @@
     }
   }
 
-  async function addGalleryImage(recipeId, imageUrl) {
-    const recipe = state.recipes.find((r) => r.id === recipeId);
-    if (!recipe || !imageUrl) return;
-    let gallery = [];
-    try { gallery = JSON.parse(recipe.gallery_images || "[]"); } catch (_) { /* ignore */ }
-    gallery.push(imageUrl);
-    recipe.gallery_images = JSON.stringify(gallery);
-    if (hasSupabaseConfig && state.currentUser) {
-      try {
-        await updateRecipeViaRest(recipeId, state.currentUser.id, { gallery_images: recipe.gallery_images });
-      } catch (err) {
-        if (err?.message?.includes("column") || err?.message?.includes("gallery_images")) {
-          setAppStatus("Gallery requires a DB column. Run: ALTER TABLE recipes ADD COLUMN gallery_images text;");
-          return;
-        }
-        logSupabaseError("add gallery image", err);
-      }
-    } else {
-      saveLocalRecipes(state.recipes);
-    }
-    showDetail(recipe, { scrollToDetail: false });
-    setAppStatus("Image added to gallery.");
-  }
-
   async function toggleShareRecipe(recipeId) {
     const recipe = state.recipes.find((item) => item.id === recipeId);
     if (!recipe) return;
@@ -1834,6 +1810,33 @@
     renderShoppingList();
     shoppingListModal.classList.remove("hidden");
     shoppingListModal.setAttribute("aria-hidden", "false");
+  }
+
+  function openImageFullView(imageUrl, altText) {
+    if (!imageUrl) return;
+    const overlay = document.createElement("div");
+    overlay.className = "image-fullview-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", "Image full view");
+    overlay.innerHTML = `
+      <button type="button" class="image-fullview-overlay__close" aria-label="Close">&times;</button>
+      <img class="image-fullview-overlay__img" src="${imageUrl.replace(/"/g, "&quot;")}" alt="${(altText || "").replace(/"/g, "&quot;")}" />
+    `;
+    const close = () => {
+      overlay.remove();
+      document.removeEventListener("keydown", onKey);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay || e.target.closest(".image-fullview-overlay__close")) {
+        close();
+      }
+    });
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(overlay);
   }
 
   function closeShoppingListModal() {
@@ -2230,70 +2233,9 @@
       return;
     }
 
-    const addGalleryBtn = event.target.closest("button[data-action='add-gallery-image']");
-    if (addGalleryBtn) {
-      const fileInput = detailContent.querySelector(".recipe-gallery__file-input");
-      const urlInput = detailContent.querySelector(".recipe-gallery__url-input");
-      if (fileInput) fileInput.classList.toggle("hidden");
-      if (urlInput) urlInput.classList.toggle("hidden");
-      if (fileInput && !fileInput.dataset.listenerAttached) {
-        fileInput.dataset.listenerAttached = "true";
-        fileInput.addEventListener("change", async () => {
-          const file = fileInput.files?.[0];
-          if (!file) return;
-          const recipeId = fileInput.dataset.id;
-          const recipe = state.recipes.find((r) => r.id === recipeId);
-          if (!recipe) return;
-          let imageUrl;
-          if (hasSupabaseConfig && state.currentUser) {
-            try {
-              const path = await uploadImage(file, state.currentUser.id);
-              const signed = await getSignedImageUrl(path);
-              imageUrl = signed || path;
-            } catch (err) {
-              setAppStatus("Gallery image upload failed.");
-              return;
-            }
-          } else {
-            imageUrl = await readFileAsDataUrl(file);
-          }
-          await addGalleryImage(recipeId, imageUrl);
-        });
-      }
-      if (urlInput && !urlInput.dataset.listenerAttached) {
-        urlInput.dataset.listenerAttached = "true";
-        urlInput.addEventListener("keydown", async (e) => {
-          if (e.key !== "Enter") return;
-          const url = urlInput.value.trim();
-          if (!url || !isValidHttpUrl(url)) { setAppStatus("Enter a valid image URL."); return; }
-          const recipeId = urlInput.dataset.id;
-          await addGalleryImage(recipeId, url);
-          urlInput.value = "";
-        });
-      }
-      return;
-    }
-
-    const removeGalleryBtn = event.target.closest("button[data-action='remove-gallery-image']");
-    if (removeGalleryBtn) {
-      const recipeId = removeGalleryBtn.dataset.id;
-      const idx = Number(removeGalleryBtn.dataset.idx);
-      const recipe = state.recipes.find((r) => r.id === recipeId);
-      if (!recipe) return;
-      let gallery = [];
-      try { gallery = JSON.parse(recipe.gallery_images || "[]"); } catch (_) { /* ignore */ }
-      gallery.splice(idx, 1);
-      recipe.gallery_images = JSON.stringify(gallery);
-      if (hasSupabaseConfig && state.currentUser) {
-        try {
-          await updateRecipeViaRest(recipeId, state.currentUser.id, { gallery_images: recipe.gallery_images });
-        } catch (err) {
-          logSupabaseError("remove gallery image", err);
-        }
-      } else {
-        saveLocalRecipes(state.recipes);
-      }
-      showDetail(recipe, { scrollToDetail: false });
+    const fullViewBtn = event.target.closest("button[data-action='open-image-fullview']");
+    if (fullViewBtn) {
+      openImageFullView(fullViewBtn.dataset.imageUrl, fullViewBtn.dataset.imageAlt || "");
       return;
     }
 

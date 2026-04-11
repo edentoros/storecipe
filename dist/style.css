@@ -701,6 +701,16 @@ button:active:not(:disabled) {
   margin: 0.75rem 0;
   min-height: 220px;
   max-height: 420px;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.recipe-detail-card button.recipe-detail-card__image-wrap:focus-visible {
+  outline: 2px solid #4f8df9;
+  outline-offset: 2px;
 }
 .recipe-detail-card .recipe-detail-card__image-wrap::before {
   content: "";
@@ -1917,4 +1927,52 @@ body.theme-dark #closeDetail {
     text-align: left;
     cursor: default;
   }
+}
+
+.image-fullview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 2rem;
+  cursor: zoom-out;
+  animation: imageFullviewFade 0.18s ease;
+}
+.image-fullview-overlay__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+  cursor: default;
+}
+.image-fullview-overlay__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.image-fullview-overlay__close:hover,
+.image-fullview-overlay__close:focus-visible {
+  background: rgba(255, 255, 255, 0.3);
+  outline: none;
+}
+@keyframes imageFullviewFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

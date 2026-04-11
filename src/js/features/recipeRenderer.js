@@ -282,7 +282,7 @@ function createRecipeRenderer({
         </div>`
         : "";
       const imageHtml = resolvedImageUrl
-        ? `<div class="recipe-detail-card__image-wrap" style="--detail-img: url('${escapeHtml(resolvedImageUrl)}')"><img src="${escapeHtml(resolvedImageUrl)}" alt="${escapeHtml(recipe.title)}" /></div>`
+        ? `<button type="button" class="recipe-detail-card__image-wrap" data-action="open-image-fullview" data-image-url="${escapeHtml(resolvedImageUrl)}" data-image-alt="${escapeHtml(recipe.title)}" aria-label="View full image" style="--detail-img: url('${escapeHtml(resolvedImageUrl)}')"><img src="${escapeHtml(resolvedImageUrl)}" alt="${escapeHtml(recipe.title)}" /></button>`
         : '<div class="recipe-detail-card__image recipe-detail-card__image--placeholder" aria-hidden="true"></div>';
 
       const categoryHtml = recipe.category
@@ -293,26 +293,9 @@ function createRecipeRenderer({
       const favLabel = favActive ? "Remove from favourites" : "Add to favourites";
       const favClass = "recipe-detail-card__fav-button" + (favActive ? " recipe-detail-card__fav-button--active" : "");
 
-      let galleryImages = [];
-      try { galleryImages = JSON.parse(recipe.gallery_images || "[]"); } catch (_) { /* ignore */ }
-      const galleryHtml = galleryImages.length
-        ? `<div class="recipe-gallery">
-            ${galleryImages.map((url, idx) => `<div class="recipe-gallery__item">
-              <img src="${escapeHtml(url)}" alt="Gallery image ${idx + 1}" loading="lazy" />
-              <button type="button" class="recipe-gallery__remove" data-action="remove-gallery-image" data-idx="${idx}" data-id="${recipe.id}" aria-label="Remove image">&times;</button>
-            </div>`).join("")}
-          </div>`
-        : "";
-
       detailContent.innerHTML = `
       <article class="recipe-detail-card">
         ${imageHtml}
-        ${galleryHtml}
-        <div class="recipe-gallery__add-wrap">
-          <button type="button" class="button button--ghost" data-action="add-gallery-image" data-id="${recipe.id}">+ Add Gallery Image</button>
-          <input type="file" class="recipe-gallery__file-input hidden" accept="image/*" data-id="${recipe.id}" />
-          <input type="text" class="recipe-gallery__url-input hidden" placeholder="Or paste image URL and press Enter" data-id="${recipe.id}" />
-        </div>
         <div class="recipe-detail-card__header">
           <div class="recipe-detail-card__title-row">
             <h2>${escapeHtml(recipe.title)}</h2>
