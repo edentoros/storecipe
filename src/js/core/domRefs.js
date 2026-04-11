@@ -82,9 +82,6 @@ function getDomRefs() {
     mealPlannerNextWeek: document.getElementById("mealPlannerNextWeek"),
     mealPlannerWeekLabel: document.getElementById("mealPlannerWeekLabel"),
     mealPlannerGrid: document.getElementById("mealPlannerGrid"),
-    mealPlannerRecipeSelect: document.getElementById("mealPlannerRecipeSelect"),
-    mealPlannerDaySelect: document.getElementById("mealPlannerDaySelect"),
-    mealPlannerAddBtn: document.getElementById("mealPlannerAddBtn"),
     clearMealPlanner: document.getElementById("clearMealPlanner"),
     addButtonWideQuery: window.matchMedia("(min-width: 768px)")
   };

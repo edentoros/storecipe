@@ -15,6 +15,8 @@
       authPasswordLabel,
       authPanel,
       settingsButton,
+      openShoppingList,
+      openMealPlanner,
       closeSettingsButton,
       settingsBackdrop,
       recipeListLoading,
@@ -217,6 +219,12 @@
       if (settingsButton) {
         settingsButton.classList.toggle("hidden", !isSignedIn);
       }
+      if (openShoppingList) {
+        openShoppingList.classList.toggle("hidden", !isSignedIn);
+      }
+      if (openMealPlanner) {
+        openMealPlanner.classList.toggle("hidden", !isSignedIn);
+      }
       authEmail.disabled = isSignedIn || state.isAuthLoading;
       authPassword.disabled = isSignedIn || state.isAuthLoading;
       if (signInButton) {
@@ -249,6 +257,8 @@
         if (signInButton) signInButton.classList.add("hidden");
         signUpButton.classList.add("hidden");
         if (settingsButton) settingsButton.classList.add("hidden");
+        if (openShoppingList) openShoppingList.classList.add("hidden");
+        if (openMealPlanner) openMealPlanner.classList.add("hidden");
         if (closeSettingsButton) closeSettingsButton.classList.add("hidden");
         if (signedInEmail) {
           signedInEmail.classList.add("hidden");

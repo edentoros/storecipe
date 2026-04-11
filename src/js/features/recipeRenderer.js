@@ -191,12 +191,20 @@ function createRecipeRenderer({
 
           const prepTimeValue = String(recipe.prep_time ?? recipe.prepTime ?? "").trim();
           const cookingTimeValue = String(recipe.cooking_time ?? recipe.cookingTime ?? "").trim();
+          const prepParsed = parseDurationText(prepTimeValue);
+          const cookParsed = parseDurationText(cookingTimeValue);
+          const totalMinutes =
+            Number(prepParsed.hours || 0) * 60 +
+            Number(prepParsed.minutes || 0) +
+            Number(cookParsed.hours || 0) * 60 +
+            Number(cookParsed.minutes || 0);
+          const storedTotalTime = String(recipe.total_time ?? recipe.totalTime ?? "").trim();
+          const totalTimeValue = totalMinutes > 0 ? formatDuration(totalMinutes) : storedTotalTime;
           const servesValue = String(recipe.serves ?? recipe.servings ?? "").trim();
           const difficultyNum = normalizeDifficulty(recipe.difficulty, 4);
           const difficultyLevel = `${difficultyNum} — ${getDifficultyLabel(difficultyNum)}`;
           const metaItems = [
-            { label: "Prep", value: prepTimeValue },
-            { label: "Cook", value: cookingTimeValue },
+            { label: "Total Time", value: totalTimeValue },
             { label: "Serves", value: servesValue },
             { label: "Difficulty", value: difficultyLevel }
           ].filter((item) => Boolean(item.value));

@@ -139,9 +139,6 @@
     mealPlannerNextWeek,
     mealPlannerWeekLabel,
     mealPlannerGrid,
-    mealPlannerRecipeSelect,
-    mealPlannerDaySelect,
-    mealPlannerAddBtn,
     clearMealPlanner,
     addButtonWideQuery
   } = getDomRefs();
@@ -1907,9 +1904,16 @@
     const weekPlan = plan[weekKey] || {};
 
     if (mealPlannerGrid) {
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+      const recipeOptions = state.recipes
+        .map((r) => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.title || "Untitled")}</option>`)
+        .join("");
       mealPlannerGrid.innerHTML = DAY_NAMES.map((dayName, i) => {
         const dayDate = new Date(monday);
         dayDate.setDate(monday.getDate() + i);
+        const dayKey = `${dayDate.getFullYear()}-${dayDate.getMonth()}-${dayDate.getDate()}`;
+        const isToday = dayKey === todayKey;
         const dateStr = dayDate.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
         const meals = weekPlan[i] || [];
         const mealsHtml = meals.map((recipeId, mealIdx) => {
@@ -1920,27 +1924,36 @@
             <button type="button" class="meal-planner__remove-meal" data-day="${i}" data-meal-idx="${mealIdx}" aria-label="Remove">&times;</button>
           </div>`;
         }).join("");
-        return `<div class="meal-planner__day">
-          <div class="meal-planner__day-header">
-            <strong>${dayName}</strong> <small>${dateStr}</small>
-          </div>
+        const dayClasses = `meal-planner__day${isToday ? " meal-planner__day--today" : ""}`;
+        const todayBadge = isToday ? '<span class="meal-planner__today-badge">Today</span>' : "";
+        const pickerHtml = state.recipes.length
+          ? `<div class="meal-planner__picker hidden" data-picker-day="${i}">
+              <select class="meal-planner__picker-select" aria-label="Choose recipe">
+                <option value="">-- Pick a recipe --</option>
+                ${recipeOptions}
+              </select>
+              <div class="meal-planner__picker-actions">
+                <button type="button" class="button button--secondary meal-planner__picker-confirm" data-day="${i}">Add</button>
+                <button type="button" class="button button--ghost meal-planner__picker-cancel" data-day="${i}">Cancel</button>
+              </div>
+            </div>`
+          : `<div class="meal-planner__picker hidden" data-picker-day="${i}">
+              <p class="meal-planner__picker-empty">No recipes yet. Add a recipe first.</p>
+              <div class="meal-planner__picker-actions">
+                <button type="button" class="button button--ghost meal-planner__picker-cancel" data-day="${i}">Close</button>
+              </div>
+            </div>`;
+        return `<div class="${dayClasses}" data-day="${i}">
+          <button type="button" class="meal-planner__day-header" data-action="toggle-picker" data-day="${i}">
+            <strong>${dayName}${todayBadge}</strong> <small>${dateStr}</small>
+            <span class="meal-planner__add-icon" aria-hidden="true">+</span>
+          </button>
           <div class="meal-planner__day-meals" data-day="${i}">
             ${mealsHtml || '<span class="meal-planner__empty">No meals planned</span>'}
           </div>
+          ${pickerHtml}
         </div>`;
       }).join("");
-    }
-
-    if (mealPlannerRecipeSelect) {
-      const currentVal = mealPlannerRecipeSelect.value;
-      mealPlannerRecipeSelect.innerHTML = '<option value="">-- Pick a recipe --</option>';
-      state.recipes.forEach((r) => {
-        const opt = document.createElement("option");
-        opt.value = r.id;
-        opt.textContent = r.title || "Untitled";
-        mealPlannerRecipeSelect.appendChild(opt);
-      });
-      if (currentVal) mealPlannerRecipeSelect.value = currentVal;
     }
   }
 
@@ -1978,20 +1991,6 @@
       renderMealPlanner();
     });
   }
-  if (mealPlannerAddBtn) {
-    mealPlannerAddBtn.addEventListener("click", () => {
-      const recipeId = mealPlannerRecipeSelect?.value;
-      const dayIdx = mealPlannerDaySelect?.value;
-      if (!recipeId || dayIdx === "" || dayIdx == null) return;
-      const weekKey = getWeekKey(mealPlannerWeekOffset);
-      const plan = loadMealPlan();
-      if (!plan[weekKey]) plan[weekKey] = {};
-      if (!plan[weekKey][dayIdx]) plan[weekKey][dayIdx] = [];
-      plan[weekKey][dayIdx].push(recipeId);
-      saveMealPlan(plan);
-      renderMealPlanner();
-    });
-  }
   if (clearMealPlanner) {
     clearMealPlanner.addEventListener("click", () => {
       const weekKey = getWeekKey(mealPlannerWeekOffset);
@@ -2003,17 +2002,67 @@
   }
   if (mealPlannerGrid) {
     mealPlannerGrid.addEventListener("click", (e) => {
-      const btn = e.target.closest(".meal-planner__remove-meal");
-      if (!btn) return;
-      const dayIdx = btn.dataset.day;
-      const mealIdx = Number(btn.dataset.mealIdx);
-      const weekKey = getWeekKey(mealPlannerWeekOffset);
-      const plan = loadMealPlan();
-      if (plan[weekKey]?.[dayIdx]) {
-        plan[weekKey][dayIdx].splice(mealIdx, 1);
-        if (!plan[weekKey][dayIdx].length) delete plan[weekKey][dayIdx];
+      const removeBtn = e.target.closest(".meal-planner__remove-meal");
+      if (removeBtn) {
+        e.stopPropagation();
+        const dayIdx = removeBtn.dataset.day;
+        const mealIdx = Number(removeBtn.dataset.mealIdx);
+        const weekKey = getWeekKey(mealPlannerWeekOffset);
+        const plan = loadMealPlan();
+        if (plan[weekKey]?.[dayIdx]) {
+          plan[weekKey][dayIdx].splice(mealIdx, 1);
+          if (!plan[weekKey][dayIdx].length) delete plan[weekKey][dayIdx];
+          saveMealPlan(plan);
+          renderMealPlanner();
+        }
+        return;
+      }
+
+      const cancelBtn = e.target.closest(".meal-planner__picker-cancel");
+      if (cancelBtn) {
+        const dayIdx = cancelBtn.dataset.day;
+        const picker = mealPlannerGrid.querySelector(`.meal-planner__picker[data-picker-day="${dayIdx}"]`);
+        const dayCard = mealPlannerGrid.querySelector(`.meal-planner__day[data-day="${dayIdx}"]`);
+        picker?.classList.add("hidden");
+        dayCard?.classList.remove("meal-planner__day--picking");
+        return;
+      }
+
+      const confirmBtn = e.target.closest(".meal-planner__picker-confirm");
+      if (confirmBtn) {
+        const dayIdx = confirmBtn.dataset.day;
+        const picker = mealPlannerGrid.querySelector(`.meal-planner__picker[data-picker-day="${dayIdx}"]`);
+        const select = picker?.querySelector(".meal-planner__picker-select");
+        const recipeId = select?.value;
+        if (!recipeId) {
+          setAppStatus("Pick a recipe first.");
+          return;
+        }
+        const weekKey = getWeekKey(mealPlannerWeekOffset);
+        const plan = loadMealPlan();
+        if (!plan[weekKey]) plan[weekKey] = {};
+        if (!plan[weekKey][dayIdx]) plan[weekKey][dayIdx] = [];
+        plan[weekKey][dayIdx].push(recipeId);
         saveMealPlan(plan);
         renderMealPlanner();
+        return;
+      }
+
+      const headerBtn = e.target.closest("[data-action='toggle-picker']");
+      if (headerBtn) {
+        const dayIdx = headerBtn.dataset.day;
+        const picker = mealPlannerGrid.querySelector(`.meal-planner__picker[data-picker-day="${dayIdx}"]`);
+        const dayCard = mealPlannerGrid.querySelector(`.meal-planner__day[data-day="${dayIdx}"]`);
+        if (!picker) return;
+        const isHidden = picker.classList.contains("hidden");
+        // close all other pickers first
+        mealPlannerGrid.querySelectorAll(".meal-planner__picker").forEach((p) => p.classList.add("hidden"));
+        mealPlannerGrid.querySelectorAll(".meal-planner__day--picking").forEach((d) => d.classList.remove("meal-planner__day--picking"));
+        if (isHidden) {
+          picker.classList.remove("hidden");
+          dayCard?.classList.add("meal-planner__day--picking");
+          picker.querySelector("select")?.focus();
+        }
       }
     });
   }
