@@ -15,6 +15,7 @@
         normalized === "ingredients" ||
         normalized === "method" ||
         normalized === "notes" ||
+        normalized === "description" ||
         normalized === "prep_time" ||
         normalized === "cooking_time" ||
         normalized === "difficulty"
@@ -32,6 +33,8 @@
           return "method";
         case "notes":
           return "notes";
+        case "description":
+          return "description";
         case "prep_time":
           return "prep time";
         case "cooking_time":
@@ -138,11 +141,16 @@
       editor.dataset.field = normalizedField;
       let focusTarget = null;
 
-      if (normalizedField === "ingredients" || normalizedField === "method" || normalizedField === "notes") {
+      if (
+        normalizedField === "ingredients" ||
+        normalizedField === "method" ||
+        normalizedField === "notes" ||
+        normalizedField === "description"
+      ) {
         const textarea = document.createElement("textarea");
         textarea.className = "recipe-inline-editor__input recipe-inline-editor__focus-target";
         textarea.value = String(recipe[normalizedField] ?? "");
-        textarea.rows = normalizedField === "ingredients" ? 6 : 10;
+        textarea.rows = normalizedField === "ingredients" ? 6 : normalizedField === "description" ? 3 : 10;
         textarea.setAttribute("aria-label", `Edit ${getInlineFieldLabel(normalizedField)}`);
         textarea.addEventListener("input", () => {
           autoSizeInlineTextarea(textarea);
@@ -271,16 +279,22 @@
       let payload = {};
       let hasChanges = false;
 
-      if (normalizedField === "ingredients" || normalizedField === "method" || normalizedField === "notes") {
+      if (
+        normalizedField === "ingredients" ||
+        normalizedField === "method" ||
+        normalizedField === "notes" ||
+        normalizedField === "description"
+      ) {
         const valueInput = editor.querySelector(".recipe-inline-editor__input");
         if (!(valueInput instanceof HTMLTextAreaElement)) return false;
         const value = String(valueInput.value ?? "").trim();
-        if (!value) {
+        const allowEmpty = normalizedField === "notes" || normalizedField === "description";
+        if (!value && !allowEmpty) {
           setAppStatus(`Please add ${label} before saving.`);
           return false;
         }
-        payload = { [normalizedField]: value };
-        hasChanges = value !== String(recipe[normalizedField] ?? "").trim();
+        payload = { [normalizedField]: value || (allowEmpty ? null : "") };
+        hasChanges = (value || "") !== String(recipe[normalizedField] ?? "").trim();
       } else if (isInlineTimeField(normalizedField)) {
         const validation = setInlineTimeEditorValidation(editor, normalizedField);
         if (!validation) return false;

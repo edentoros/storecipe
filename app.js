@@ -390,6 +390,9 @@
     if (recipeForm.elements.category) {
       recipeForm.elements.category.value = recipe.category || "";
     }
+    if (recipeForm.elements.description) {
+      recipeForm.elements.description.value = recipe.description || "";
+    }
     recipeForm.elements.ingredients.value = recipe.ingredients || "";
     recipeForm.elements.method.value = recipe.method || "";
     if (recipeForm.elements.notes) {
@@ -445,6 +448,7 @@
       const draft = {
         editingRecipeId: state.editingRecipeId || null,
         title: recipeForm.elements.title?.value || "",
+        description: recipeForm.elements.description?.value || "",
         ingredients: recipeForm.elements.ingredients?.value || "",
         method: recipeForm.elements.method?.value || "",
         notes: recipeForm.elements.notes?.value || "",
@@ -498,6 +502,7 @@
       setRecipeFormMode(null);
     }
     if (recipeForm.elements.title) recipeForm.elements.title.value = draft.title || "";
+    if (recipeForm.elements.description) recipeForm.elements.description.value = draft.description || "";
     if (recipeForm.elements.category) recipeForm.elements.category.value = draft.category || "";
     if (recipeForm.elements.ingredients) recipeForm.elements.ingredients.value = draft.ingredients || "";
     if (recipeForm.elements.method) recipeForm.elements.method.value = draft.method || "";
@@ -709,6 +714,7 @@
 
   async function addRecipe(formData) {
     const title = formData.get("title")?.toString().trim();
+    const description = formData.get("description")?.toString().trim() || null;
     const ingredients = formData.get("ingredients")?.toString().trim();
     const method = formData.get("method")?.toString().trim();
     const notes = formData.get("notes")?.toString().trim() || null;
@@ -732,6 +738,7 @@
       const localRecipe = {
         id: crypto.randomUUID(),
         title,
+        description,
         ingredients,
         method,
         notes,
@@ -780,6 +787,7 @@
 
     const basePayload = {
       title,
+      description,
       ingredients,
       method,
       notes,
@@ -850,6 +858,7 @@
     }
 
     const title = formData.get("title")?.toString().trim();
+    const description = formData.get("description")?.toString().trim() || null;
     const ingredients = formData.get("ingredients")?.toString().trim();
     const method = formData.get("method")?.toString().trim();
     const notes = formData.get("notes")?.toString().trim() || null;
@@ -880,6 +889,7 @@
       const updatedLocalRecipe = {
         ...existingRecipe,
         title,
+        description,
         ingredients,
         method,
         notes,
@@ -929,6 +939,7 @@
 
     const basePayload = {
       title,
+      description,
       ingredients,
       method,
       notes,

@@ -180,6 +180,15 @@ function createRecipeRenderer({
           heading.classList.add("recipe-card__title-link");
           body.appendChild(heading);
 
+          if (recipe.description) {
+            const descriptionEl = document.createElement("p");
+            descriptionEl.className = "recipe-card__description";
+            descriptionEl.textContent = recipe.description;
+            descriptionEl.dataset.action = "view";
+            descriptionEl.dataset.id = recipe.id || "";
+            body.appendChild(descriptionEl);
+          }
+
           const dateText = document.createElement("p");
           dateText.textContent = formatDate(recipe.created_at);
           body.appendChild(dateText);
@@ -304,6 +313,14 @@ function createRecipeRenderer({
             <button class="${favClass}" type="button" data-action="toggle-fav" data-id="${recipe.id}" aria-label="${favLabel}">${favHeart}</button>
           </div>
           <p class="recipe-detail-card__date">Added ${formatDate(recipe.created_at)} ${categoryHtml}</p>
+          ${recipe.description ? `<button
+            class="inline-edit-trigger recipe-detail-card__description"
+            data-action="inline-edit-field"
+            data-field="description"
+            data-field-content="description"
+            type="button"
+            aria-label="Click to edit description"
+          >${escapeHtml(recipe.description).replace(/\n/g, "<br />")}</button>` : `<button class="button button--ghost recipe-detail-card__add-description" type="button" data-action="inline-edit-field" data-field="description" data-id="${recipe.id}">+ Add Description</button>`}
         </div>
         ${metaHtml}
 
