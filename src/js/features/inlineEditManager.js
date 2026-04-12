@@ -133,8 +133,9 @@
       }
 
       const fieldContent = detailContent.querySelector(`[data-field-content='${normalizedField}']`);
-      if (!(fieldContent instanceof HTMLElement)) return;
-      const target = fieldContent.closest(".recipe-detail-card__meta-item") || fieldContent;
+      const addButton = !fieldContent ? detailContent.querySelector(`[data-action='inline-edit-field'][data-field='${normalizedField}']`) : null;
+      if (!(fieldContent instanceof HTMLElement) && !(addButton instanceof HTMLElement)) return;
+      const target = fieldContent ? (fieldContent.closest(".recipe-detail-card__meta-item") || fieldContent) : addButton;
 
       const editor = document.createElement("div");
       editor.className = "recipe-inline-editor";
