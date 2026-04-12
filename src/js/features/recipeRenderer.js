@@ -189,10 +189,6 @@ function createRecipeRenderer({
             body.appendChild(descriptionEl);
           }
 
-          const dateText = document.createElement("p");
-          dateText.textContent = formatDate(recipe.created_at);
-          body.appendChild(dateText);
-
           if (recipe.category) {
             const badge = document.createElement("span");
             badge.className = "recipe-card__category-badge";
@@ -312,7 +308,7 @@ function createRecipeRenderer({
             <h2>${escapeHtml(recipe.title)}</h2>
             <button class="${favClass}" type="button" data-action="toggle-fav" data-id="${recipe.id}" aria-label="${favLabel}">${favHeart}</button>
           </div>
-          <p class="recipe-detail-card__date">Added ${formatDate(recipe.created_at)} ${categoryHtml}</p>
+          <p class="recipe-detail-card__date">Added ${formatDate(recipe.created_at)}${recipe.updated_at && recipe.updated_at !== recipe.created_at ? ` · Updated ${formatDate(recipe.updated_at)}` : ""} ${categoryHtml}</p>
           ${recipe.description ? `<button
             class="inline-edit-trigger recipe-detail-card__description"
             data-action="inline-edit-field"

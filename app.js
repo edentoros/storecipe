@@ -895,7 +895,8 @@
         notes,
         category,
         ...recipeMeta,
-        image_url: nextImageUrl
+        image_url: nextImageUrl,
+        updated_at: new Date().toISOString()
       };
       state.recipes = state.recipes.map((item) => (item.id === state.editingRecipeId ? updatedLocalRecipe : item));
       saveLocalRecipes(state.recipes);
@@ -943,7 +944,8 @@
       ingredients,
       method,
       notes,
-      image_url: nextImagePath
+      image_url: nextImagePath,
+      updated_at: new Date().toISOString()
     };
     const catFavFields = state.hasCategoryFavColumns ? { category } : {};
     const payload = state.hasRecipeMetaColumns ? { ...basePayload, ...recipeMeta, ...catFavFields } : { ...basePayload, ...catFavFields };

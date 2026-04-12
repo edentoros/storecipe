@@ -339,7 +339,7 @@
       }
 
       if (!hasSupabaseConfig) {
-        const updatedLocalRecipe = { ...recipe, ...payload };
+        const updatedLocalRecipe = { ...recipe, ...payload, updated_at: new Date().toISOString() };
         state.recipes = state.recipes.map((item) => (item.id === recipe.id ? updatedLocalRecipe : item));
         saveLocalRecipes(state.recipes);
         renderList();
@@ -354,7 +354,7 @@
       }
 
       try {
-        const updatedRows = await updateRecipeViaRest(recipe.id, state.currentUser.id, payload);
+        const updatedRows = await updateRecipeViaRest(recipe.id, state.currentUser.id, { ...payload, updated_at: new Date().toISOString() });
         const updatedRecipe = Array.isArray(updatedRows) ? updatedRows[0] : null;
         if (!updatedRecipe) {
           throw new Error("Update succeeded but no row was returned.");
