@@ -1889,9 +1889,11 @@
     copyShoppingList.addEventListener("click", async () => {
       const items = shoppingListItems.querySelectorAll(".shopping-list__item");
       const lines = Array.from(items).map((li) => {
-        const checkbox = li.querySelector("input[type='checkbox']");
-        const text = li.querySelector("span")?.textContent || "";
-        return checkbox?.checked ? `✓ ${text}` : `☐ ${text}`;
+        const qty = li.querySelector(".shopping-list__qty")?.textContent?.trim() || "";
+        const unit = li.querySelector(".shopping-list__unit")?.textContent?.trim() || "";
+        const name = li.querySelector(".shopping-list__name")?.textContent?.trim() || "";
+        const parts = [qty, unit, name].filter(Boolean).join(" ");
+        return `- ${parts}`;
       });
       if (!lines.length) return;
       try {
