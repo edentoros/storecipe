@@ -1805,16 +1805,24 @@
     shoppingListItems.innerHTML = "";
     for (const [, item] of aggregated) {
       const li = document.createElement("li");
-      li.className = "shopping-list__item";
-      const qtyText = item.quantity !== null ? decimalToFraction(item.quantity) : "";
+      const qtyText = item.quantity !== null && item.quantity > 0 ? decimalToFraction(item.quantity) : "";
       const unitText = item.unit ? escapeHtml(item.unit) : "";
       const nameText = escapeHtml(item.name);
-      li.innerHTML = `<label>
-        <input type="checkbox" class="shopping-list__check" />
-        <span class="shopping-list__qty">${escapeHtml(qtyText)}</span>
-        <span class="shopping-list__unit">${unitText}</span>
-        <span class="shopping-list__name">${nameText}</span>
-      </label>`;
+      const hasMeta = Boolean(qtyText) || Boolean(unitText);
+      li.className = "shopping-list__item" + (hasMeta ? "" : " shopping-list__item--no-meta");
+      if (hasMeta) {
+        li.innerHTML = `<label>
+          <input type="checkbox" class="shopping-list__check" />
+          <span class="shopping-list__qty">${escapeHtml(qtyText)}</span>
+          <span class="shopping-list__unit">${unitText}</span>
+          <span class="shopping-list__name">${nameText}</span>
+        </label>`;
+      } else {
+        li.innerHTML = `<label>
+          <input type="checkbox" class="shopping-list__check" />
+          <span class="shopping-list__name">${nameText}</span>
+        </label>`;
+      }
       shoppingListItems.appendChild(li);
     }
   }
