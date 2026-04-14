@@ -946,16 +946,33 @@ button:active:not(:disabled) {
   font-size: 0.95rem;
   line-height: 1.4;
 }
+.shopping-list__check {
+  width: 18px !important;
+  height: 18px;
+  margin: 0;
+  padding: 0 !important;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #334e68;
+}
 .shopping-list__qty {
   min-width: 1.8em;
   text-align: right;
   font-weight: 600;
   flex-shrink: 0;
 }
+.shopping-list__qty:empty {
+  min-width: 0;
+  display: none;
+}
 .shopping-list__unit {
   min-width: 2em;
   color: #616e7c;
   flex-shrink: 0;
+}
+.shopping-list__unit:empty {
+  min-width: 0;
+  display: none;
 }
 .shopping-list__name {
   flex: 1;
