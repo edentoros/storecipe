@@ -941,7 +941,7 @@ button:active:not(:disabled) {
 }
 .shopping-list__item label {
   display: grid;
-  grid-template-columns: 18px 2.2em 2.8em 1fr;
+  grid-template-columns: 18px 2.5em 6em 1fr;
   column-gap: 0.6rem;
   align-items: start;
   cursor: pointer;
