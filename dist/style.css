@@ -936,13 +936,13 @@ button:active:not(:disabled) {
   margin: 0;
 }
 .shopping-list__item {
-  padding: 0.35rem 0;
+  padding: 0.5rem 0;
   border-bottom: 1px solid #f0f4f8;
 }
 .shopping-list__item label {
   display: grid;
-  grid-template-columns: 18px 2em 2.5em 1fr;
-  column-gap: 0.4rem;
+  grid-template-columns: 18px 2.2em 2.8em 1fr;
+  column-gap: 0.6rem;
   align-items: start;
   cursor: pointer;
   font-size: 0.95rem;
@@ -954,7 +954,7 @@ button:active:not(:disabled) {
 .shopping-list__check {
   width: 18px !important;
   height: 18px;
-  margin: 2px 0 0 0;
+  margin: 2px -0.3rem 0 0;
   padding: 0 !important;
   cursor: pointer;
   accent-color: #334e68;
