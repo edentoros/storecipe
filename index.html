@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Storecipe</title>
-    <link rel="stylesheet" href="dist/style.css?v=20260607b" />
+    <link rel="stylesheet" href="dist/style.css?v=20260607c" />
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
@@ -115,9 +115,21 @@
                 </li>
               </ul>
             </div>
-            <button id="themeToggleButton" class="button button--ghost theme-toggle-button hidden" type="button">
-              Dark theme: Off
-            </button>
+            <div class="theme-row">
+              <button id="themeToggleButton" class="button button--ghost theme-toggle-button hidden" type="button">
+                Dark theme: Off
+              </button>
+              <button
+                id="sunsetInfoButton"
+                class="sunset-info-button hidden"
+                type="button"
+                aria-expanded="false"
+                aria-controls="sunsetInfoText"
+                data-i18n-aria-label="theme.sunsetInfoAria"
+                aria-label="About sunset theme"
+              >?</button>
+            </div>
+            <p id="sunsetInfoText" class="sunset-info-text hidden" aria-live="polite"></p>
             <p id="signedInEmail" class="auth-signed-email hidden"></p>
             <button id="signOutButton" class="button button--ghost hidden" type="button" data-i18n="auth.signOut">Sign Out</button>
             <div id="authLoading" class="auth-loading hidden" aria-live="polite">
@@ -428,6 +440,6 @@
     <script defer src="src/js/features/recipeMetaManager.js"></script>
     <script defer src="src/js/features/recipeRenderer.js"></script>
     <script defer src="src/js/services/supabaseServices.js"></script>
-    <script defer src="app.js?v=20260607b"></script>
+    <script defer src="app.js?v=20260607c"></script>
   </body>
 </html>

@@ -37,6 +37,8 @@
       "theme.light": "Theme: Light",
       "theme.dark": "Theme: Dark",
       "theme.sunset": "Theme: Sunset",
+      "theme.sunsetInfoAria": "About sunset theme",
+      "theme.sunsetInfoBody": "Dark theme turns on from {start} to {end} (your local time).",
 
       // Search
       "search.title": "Search Recipes",
@@ -341,6 +343,8 @@
       "theme.light": "Тема: Светлая",
       "theme.dark": "Тема: Тёмная",
       "theme.sunset": "Тема: Закат",
+      "theme.sunsetInfoAria": "О теме «Закат»",
+      "theme.sunsetInfoBody": "Тёмная тема включается с {start} до {end} (по вашему местному времени).",
 
       "search.title": "Поиск рецептов",
       "search.placeholder": "Поиск по названию...",

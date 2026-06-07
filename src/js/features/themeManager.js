@@ -1,15 +1,15 @@
 (() => {
-  function createThemeManager({ dom, state, config, helpers, supabaseServices, setAppStatus }) {
-    const { themeToggleButton } = dom;
+  function createThemeManager({ dom, state, config, helpers, supabaseServices, setAppStatus, i18n }) {
+    const { themeToggleButton, sunsetInfoButton, sunsetInfoText } = dom;
     const { DEFAULT_THEME, THEME_LOCAL_KEY_PREFIX, THEME_PREFERENCES_TABLE } = config;
     const { normalizeTheme } = helpers;
     const { hasSupabaseConfig, fetchThemePreferenceViaRest, upsertThemePreferenceViaRest } = supabaseServices;
+    const t = i18n ? (k, p) => i18n.t(k, p) : (k) => k;
 
     function getThemeStorageKey(userId) {
       return `${THEME_LOCAL_KEY_PREFIX}${userId}`;
     }
 
-    const THEME_LABELS = { light: "Theme: Light", dark: "Theme: Dark", sunset: "Theme: Sunset" };
     const SUNSET_START_HOUR = 19;
     const SUNSET_END_HOUR = 7;
     let sunsetTimerId = null;
@@ -19,12 +19,55 @@
       return hour >= SUNSET_START_HOUR || hour < SUNSET_END_HOUR;
     }
 
+    function formatHour(h) {
+      return `${String(h).padStart(2, "0")}:00`;
+    }
+
+    function getThemeLabel(theme) {
+      if (theme === "dark") return t("theme.dark");
+      if (theme === "sunset") return t("theme.sunset");
+      return t("theme.light");
+    }
+
+    function updateSunsetInfo() {
+      const isSunset = state.currentTheme === "sunset";
+      if (sunsetInfoButton) {
+        sunsetInfoButton.classList.toggle("hidden", !isSunset);
+        if (!isSunset) {
+          sunsetInfoButton.setAttribute("aria-expanded", "false");
+        }
+      }
+      if (sunsetInfoText) {
+        sunsetInfoText.textContent = t("theme.sunsetInfoBody", {
+          start: formatHour(SUNSET_START_HOUR),
+          end: formatHour(SUNSET_END_HOUR)
+        });
+        if (!isSunset) {
+          sunsetInfoText.classList.add("hidden");
+        }
+      }
+    }
+
     function updateThemeToggleUi() {
       if (!themeToggleButton) return;
-      const label = THEME_LABELS[state.currentTheme] || THEME_LABELS.light;
-      themeToggleButton.textContent = label;
+      themeToggleButton.textContent = getThemeLabel(state.currentTheme);
       const isPressed = state.currentTheme === "dark" || (state.currentTheme === "sunset" && isSunsetDark());
       themeToggleButton.setAttribute("aria-pressed", isPressed ? "true" : "false");
+      updateSunsetInfo();
+    }
+
+    function toggleSunsetInfo() {
+      if (!sunsetInfoText || !sunsetInfoButton) return;
+      const willOpen = sunsetInfoText.classList.contains("hidden");
+      sunsetInfoText.classList.toggle("hidden", !willOpen);
+      sunsetInfoButton.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    }
+
+    if (sunsetInfoButton) {
+      sunsetInfoButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleSunsetInfo();
+      });
     }
 
     const ANONYMOUS_THEME_KEY = `${THEME_LOCAL_KEY_PREFIX}anonymous`;

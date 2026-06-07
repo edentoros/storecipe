@@ -81,6 +81,8 @@
     signInButton,
     signUpButton,
     themeToggleButton,
+    sunsetInfoButton,
+    sunsetInfoText,
     languageSelector,
     languageToggleButton,
     languageMenu,
@@ -357,12 +359,13 @@
   const setAuthUi = authUiManager.setAuthUi;
 
   const themeManager = createThemeManager({
-    dom: { themeToggleButton },
+    dom: { themeToggleButton, sunsetInfoButton, sunsetInfoText },
     state,
     config: { DEFAULT_THEME, THEME_LOCAL_KEY_PREFIX, THEME_PREFERENCES_TABLE },
     helpers: { normalizeTheme },
     supabaseServices: { hasSupabaseConfig, fetchThemePreferenceViaRest, upsertThemePreferenceViaRest },
-    setAppStatus
+    setAppStatus,
+    i18n
   });
   const updateThemeToggleUi = themeManager.updateThemeToggleUi;
   const setTheme = themeManager.setTheme;

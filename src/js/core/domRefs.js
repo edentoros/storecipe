@@ -18,6 +18,8 @@ function getDomRefs() {
     signInButton: document.getElementById("signInButton"),
     signUpButton: document.getElementById("signUpButton"),
     themeToggleButton: document.getElementById("themeToggleButton"),
+    sunsetInfoButton: document.getElementById("sunsetInfoButton"),
+    sunsetInfoText: document.getElementById("sunsetInfoText"),
     languageSelector: document.getElementById("languageSelector"),
     languageToggleButton: document.getElementById("languageToggleButton"),
     languageMenu: document.getElementById("languageMenu"),
