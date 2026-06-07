@@ -12,9 +12,25 @@ function createRecipeMetaManager({
   difficultyInput,
   difficultyValue,
   defaultDifficulty,
-  helpers
+  helpers,
+  i18n
 }) {
-  const { normalizeDifficulty, getDifficultyLabel, parseTimePair, validateServesValue, formatDuration } = helpers;
+  const { normalizeDifficulty, getDifficultyLabel: getDifficultyLabelHelper, parseTimePair, validateServesValue, formatDuration } = helpers;
+  const t = i18n ? (k, p) => i18n.t(k, p) : (k) => k;
+  const getDifficultyLabel = i18n && i18n.getDifficultyLabel ? (n) => i18n.getDifficultyLabel(n) : getDifficultyLabelHelper;
+  function getTimeMessages() {
+    return {
+      hoursMax: t("validation.hoursMax"),
+      minutesMax: t("validation.minutesMax"),
+      required: t("validation.timeRequired")
+    };
+  }
+  function getServesMessages() {
+    return {
+      wholeNumbers: t("validation.servesWhole"),
+      range: t("validation.servesRange")
+    };
+  }
 
   function syncDifficultyUi() {
     if (!difficultyInput || !difficultyValue) return;
@@ -42,8 +58,9 @@ function createRecipeMetaManager({
     const cookHours = cookHoursInput?.value ?? "";
     const cookMinutes = cookMinutesInput?.value ?? "";
 
-    const prep = parseTimePair(prepHours, prepMinutes, "Prep time");
-    const cook = parseTimePair(cookHours, cookMinutes, "Cooking time");
+    const timeMsgs = getTimeMessages();
+    const prep = parseTimePair(prepHours, prepMinutes, t("form.prepTime"), timeMsgs);
+    const cook = parseTimePair(cookHours, cookMinutes, t("form.cookingTime"), timeMsgs);
 
     setFieldValidity(prepHoursInput, prep.hoursError);
     setFieldValidity(prepMinutesInput, prep.minutesError);
@@ -51,7 +68,7 @@ function createRecipeMetaManager({
     setFieldValidity(cookMinutesInput, cook.minutesError);
     setTimeWarning(prepTimeWarning, prep.message);
     setTimeWarning(cookTimeWarning, cook.message);
-    const servesValidation = validateServesValue(formData.get("serves"));
+    const servesValidation = validateServesValue(formData.get("serves"), getServesMessages());
     setFieldValidity(servesInput, servesValidation.message);
     setTimeWarning(servesWarning, servesValidation.message);
 

@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Personal Recipe App</title>
-    <link rel="stylesheet" href="dist/style.css?v=20260607a" />
+    <title>Storecipe</title>
+    <link rel="stylesheet" href="dist/style.css?v=20260607b" />
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
     <div id="toastContainer" class="toast-container" aria-live="polite" aria-relevant="additions"></div>
     <div id="startupLoader" class="startup-loader" role="status" aria-live="polite">
       <div class="startup-loader__spinner" aria-hidden="true"></div>
-      <p>Loading Storecipe...</p>
+      <p data-i18n="app.loading">Loading Storecipe...</p>
     </div>
 
     <main id="appRoot" class="app" aria-busy="true" aria-hidden="true" hidden>
@@ -19,13 +19,13 @@
         <div class="app__header-top">
           <h1>Storecipe</h1>
           <div class="app__header-tools">
-            <button id="openShoppingList" class="button button--secondary app__tool-button hidden" type="button" title="Open shopping list" aria-label="Open shopping list">
+            <button id="openShoppingList" class="button button--secondary app__tool-button hidden" type="button" data-i18n-title="header.shoppingTitle" data-i18n-aria-label="header.shoppingTitle" title="Open shopping list" aria-label="Open shopping list">
               <span aria-hidden="true">&#128722;</span>
-              <span class="app__tool-button-label">Shopping</span>
+              <span class="app__tool-button-label" data-i18n="header.shopping">Shopping</span>
             </button>
-            <button id="openMealPlanner" class="button button--secondary app__tool-button hidden" type="button" title="Open meal planner" aria-label="Open meal planner">
+            <button id="openMealPlanner" class="button button--secondary app__tool-button hidden" type="button" data-i18n-title="header.plannerTitle" data-i18n-aria-label="header.plannerTitle" title="Open meal planner" aria-label="Open meal planner">
               <span aria-hidden="true">&#128197;</span>
-              <span class="app__tool-button-label">Planner</span>
+              <span class="app__tool-button-label" data-i18n="header.planner">Planner</span>
             </button>
             <button
               id="settingsButton"
@@ -33,6 +33,7 @@
               type="button"
               aria-expanded="false"
               aria-controls="authPanel"
+              data-i18n="header.settings"
             >
               Settings
             </button>
@@ -44,22 +45,23 @@
 
       <section id="authPanel" class="panel panel--auth" aria-labelledby="authPanelTitle">
         <div class="panel__title-row">
-          <h2 id="authPanelTitle">Account</h2>
+          <h2 id="authPanelTitle" data-i18n="auth.title">Account</h2>
           <button
             id="closeSettingsButton"
             class="icon-button button--ghost settings-close-button hidden"
             type="button"
+            data-i18n-aria-label="auth.close"
             aria-label="Close settings"
           >
             x
           </button>
         </div>
-        <p id="authStatus" class="auth-status">Sign into your account or create new account.</p>
+        <p id="authStatus" class="auth-status" data-i18n="auth.signInPrompt">Sign into your account or create new account.</p>
         <form id="authForm">
-          <label for="authEmail">Email</label>
+          <label for="authEmail" data-i18n="auth.email">Email</label>
           <input id="authEmail" name="email" type="email" autocomplete="email" required />
 
-          <label for="authPassword">Password</label>
+          <label for="authPassword" data-i18n="auth.password">Password</label>
           <input
             id="authPassword"
             name="password"
@@ -69,7 +71,7 @@
             required
           />
 
-          <label for="authConfirmPassword" class="hidden">Confirm Password</label>
+          <label for="authConfirmPassword" class="hidden" data-i18n="auth.confirmPassword">Confirm Password</label>
           <input
             id="authConfirmPassword"
             name="confirmPassword"
@@ -77,13 +79,14 @@
             autocomplete="new-password"
             minlength="8"
             class="hidden"
+            data-i18n-placeholder="auth.confirmPasswordPlaceholder"
             placeholder="Confirm password"
           />
           <div id="passwordRequirements" class="password-requirements hidden" aria-live="polite"></div>
 
           <div class="auth-actions">
-            <button id="signInButton" class="button" type="submit">Sign In</button>
-            <button id="signUpButton" class="button button--secondary" type="button">Sign Up</button>
+            <button id="signInButton" class="button" type="submit" data-i18n="auth.signIn">Sign In</button>
+            <button id="signUpButton" class="button button--secondary" type="button" data-i18n="auth.signUp">Sign Up</button>
             <div id="languageSelector" class="language-selector hidden">
               <button
                 id="languageToggleButton"
@@ -94,7 +97,7 @@
                 aria-controls="languageMenu"
               >
                 <span class="language-toggle-button__flag" aria-hidden="true">&#127468;&#127463;</span>
-                <span class="language-toggle-button__label">Language</span>
+                <span class="language-toggle-button__label" data-i18n="language.label">Language</span>
                 <span class="language-toggle-button__caret" aria-hidden="true">&#9662;</span>
               </button>
               <ul id="languageMenu" class="language-menu hidden" role="listbox" aria-label="Choose language">
@@ -116,10 +119,10 @@
               Dark theme: Off
             </button>
             <p id="signedInEmail" class="auth-signed-email hidden"></p>
-            <button id="signOutButton" class="button button--ghost hidden" type="button">Sign Out</button>
+            <button id="signOutButton" class="button button--ghost hidden" type="button" data-i18n="auth.signOut">Sign Out</button>
             <div id="authLoading" class="auth-loading hidden" aria-live="polite">
               <span class="auth-loading__spinner" aria-hidden="true"></span>
-              <span id="authLoadingText">Signing in...</span>
+              <span id="authLoadingText" data-i18n="auth.signingIn">Signing in...</span>
             </div>
           </div>
         </form>
@@ -127,39 +130,40 @@
       <div id="settingsBackdrop" class="settings-backdrop hidden" aria-hidden="true"></div>
 
       <section class="panel panel--search">
-        <h2><label for="searchInput">Search Recipes</label></h2>
-        <input id="searchInput" type="text" placeholder="Search by title..." />
+        <h2><label for="searchInput" data-i18n="search.title">Search Recipes</label></h2>
+        <input id="searchInput" type="text" data-i18n-placeholder="search.placeholder" placeholder="Search by title..." />
         <div class="search-filters">
-          <select id="categoryFilter" aria-label="Filter by category">
-            <option value="">All categories</option>
-            <option value="breakfast">Breakfast</option>
-            <option value="lunch">Lunch</option>
-            <option value="dinner">Dinner</option>
-            <option value="soups">Soups</option>
-            <option value="snack">Snack</option>
-            <option value="dessert">Dessert</option>
-            <option value="drinks">Drinks</option>
-            <option value="other">Other</option>
+          <select id="categoryFilter" data-i18n-aria-label="search.filterCategory" aria-label="Filter by category">
+            <option value="" data-i18n="search.allCategories">All categories</option>
+            <option value="breakfast" data-i18n="category.breakfast">Breakfast</option>
+            <option value="lunch" data-i18n="category.lunch">Lunch</option>
+            <option value="dinner" data-i18n="category.dinner">Dinner</option>
+            <option value="soups" data-i18n="category.soups">Soups</option>
+            <option value="snack" data-i18n="category.snack">Snack</option>
+            <option value="dessert" data-i18n="category.dessert">Dessert</option>
+            <option value="drinks" data-i18n="category.drinks">Drinks</option>
+            <option value="other" data-i18n="category.other">Other</option>
           </select>
-          <button id="favouritesFilter" class="button button--ghost" type="button" aria-pressed="false" title="Show favourites only">&#9825; Favourites</button>
-          <select id="sortSelect" aria-label="Sort recipes">
-            <option value="created_at_desc">Newest first</option>
-            <option value="created_at_asc">Oldest first</option>
-            <option value="title_asc">Name (A–Z)</option>
-            <option value="title_desc">Name (Z–A)</option>
-            <option value="difficulty_asc">Easiest first</option>
-            <option value="difficulty_desc">Hardest first</option>
+          <button id="favouritesFilter" class="button button--ghost" type="button" aria-pressed="false" data-i18n="search.favourites" data-i18n-title="search.favouritesTitle" title="Show favourites only">&#9825; Favourites</button>
+          <select id="sortSelect" data-i18n-aria-label="search.sortLabel" aria-label="Sort recipes">
+            <option value="created_at_desc" data-i18n="sort.newest">Newest first</option>
+            <option value="created_at_asc" data-i18n="sort.oldest">Oldest first</option>
+            <option value="title_asc" data-i18n="sort.titleAZ">Name (A–Z)</option>
+            <option value="title_desc" data-i18n="sort.titleZA">Name (Z–A)</option>
+            <option value="difficulty_asc" data-i18n="sort.easiest">Easiest first</option>
+            <option value="difficulty_desc" data-i18n="sort.hardest">Hardest first</option>
           </select>
         </div>
       </section>
 
       <section class="panel panel--list">
         <div class="panel__title-row">
-          <h2>Recipe List</h2>
+          <h2 data-i18n="list.title">Recipe List</h2>
           <button
             id="toggleAddRecipe"
             class="icon-button"
             type="button"
+            data-i18n-aria-label="list.showAdd"
             aria-label="Show Add Recipe"
             aria-expanded="false"
           >
@@ -188,48 +192,50 @@
       </section>
 
       <section id="addRecipeSection" class="panel panel--form hidden">
-        <h2 id="recipeFormHeading">Add Recipe</h2>
+        <h2 id="recipeFormHeading" data-i18n="form.addTitle">Add Recipe</h2>
         <form id="recipeForm">
-          <label for="title">Title</label>
+          <label for="title" data-i18n="form.title">Title</label>
           <input id="title" name="title" type="text" required />
 
-          <label for="description">Description (optional)</label>
-          <textarea id="description" name="description" rows="3" placeholder="A short summary shown on the recipe card"></textarea>
+          <label for="description" data-i18n="form.description">Description (optional)</label>
+          <textarea id="description" name="description" rows="3" data-i18n-placeholder="form.descriptionPlaceholder" placeholder="A short summary shown on the recipe card"></textarea>
 
-          <label for="category">Category</label>
+          <label for="category" data-i18n="form.category">Category</label>
           <select id="category" name="category">
-            <option value="">None</option>
-            <option value="breakfast">Breakfast</option>
-            <option value="lunch">Lunch</option>
-            <option value="dinner">Dinner</option>
-            <option value="soups">Soups</option>
-            <option value="snack">Snack</option>
-            <option value="dessert">Dessert</option>
-            <option value="drinks">Drinks</option>
-            <option value="other">Other</option>
+            <option value="" data-i18n="category.none">None</option>
+            <option value="breakfast" data-i18n="category.breakfast">Breakfast</option>
+            <option value="lunch" data-i18n="category.lunch">Lunch</option>
+            <option value="dinner" data-i18n="category.dinner">Dinner</option>
+            <option value="soups" data-i18n="category.soups">Soups</option>
+            <option value="snack" data-i18n="category.snack">Snack</option>
+            <option value="dessert" data-i18n="category.dessert">Dessert</option>
+            <option value="drinks" data-i18n="category.drinks">Drinks</option>
+            <option value="other" data-i18n="category.other">Other</option>
           </select>
 
-          <label for="recipeImportUrl" class="sr-only">Import from recipe link</label>
+          <label for="recipeImportUrl" class="sr-only" data-i18n="form.importUrlLabel">Import from recipe link</label>
           <div class="recipe-import-tools hidden">
             <div class="recipe-import-tools__row">
               <input
                 id="recipeImportUrl"
                 name="recipeImportUrl"
                 type="text"
+                data-i18n-placeholder="form.importUrlPlaceholder"
                 placeholder="Paste recipe URL (https://...)"
                 autocomplete="off"
                 inputmode="url"
               />
-              <button id="importRecipeButton" type="button" class="button button--secondary recipe-import-tools__button">
+              <button id="importRecipeButton" type="button" class="button button--secondary recipe-import-tools__button" data-i18n="form.importButton">
                 Import
               </button>
             </div>
-            <label for="recipeImportPrompt" class="recipe-import-tools__prompt-label">Import prompt</label>
+            <label for="recipeImportPrompt" class="recipe-import-tools__prompt-label" data-i18n="form.importPrompt">Import prompt</label>
             <textarea
               id="recipeImportPrompt"
               name="recipeImportPrompt"
               class="recipe-import-tools__prompt"
               rows="5"
+              data-i18n-placeholder="form.importPromptPlaceholder"
               placeholder="Prompt used to structure extracted recipe text"
             ></textarea>
             <div class="recipe-import-tools__actions">
@@ -237,49 +243,51 @@
                 id="resetImportPromptButton"
                 type="button"
                 class="button button--ghost recipe-import-tools__button recipe-import-tools__button--small"
+                data-i18n="form.resetImportPrompt"
               >
                 Reset prompt
               </button>
             </div>
           </div>
 
-          <label for="image">Image</label>
+          <label for="image" data-i18n="form.image">Image</label>
           <input id="image" name="image" type="file" accept="image/*" class="hidden" />
           <div id="editImageTools" class="edit-image-tools">
             <div class="edit-image-tools__row">
-              <img id="editImagePreview" class="edit-image-tools__preview hidden" alt="Recipe image preview" />
-              <p id="editImageEmpty" class="edit-image-tools__empty">No image selected.</p>
+              <img id="editImagePreview" class="edit-image-tools__preview hidden" alt="" />
+              <p id="editImageEmpty" class="edit-image-tools__empty" data-i18n="form.noImage">No image selected.</p>
               <div class="edit-image-tools__actions">
                 <div class="edit-image-tools__upload-row">
                   <button
                     id="chooseImageButton"
                     type="button"
                     class="button button--secondary edit-image-tools__button edit-image-tools__button--upload"
+                    data-i18n="form.uploadImage"
                   >
                     Upload new image
                   </button>
-                  <input id="imageUrlInput" type="url" class="edit-image-tools__url-input" placeholder="Or paste image URL" />
+                  <input id="imageUrlInput" type="url" class="edit-image-tools__url-input" data-i18n-placeholder="form.imageUrl" placeholder="Or paste image URL" />
                 </div>
-                <button id="clearImageButton" type="button" class="button button--ghost edit-image-tools__button">
+                <button id="clearImageButton" type="button" class="button button--ghost edit-image-tools__button" data-i18n="form.deleteImage">
                   Delete image
                 </button>
-                <button id="undoImageButton" type="button" class="button button--ghost edit-image-tools__button">
+                <button id="undoImageButton" type="button" class="button button--ghost edit-image-tools__button" data-i18n="form.undoImage">
                   Undo
                 </button>
               </div>
             </div>
           </div>
 
-          <label for="ingredients">Ingredients</label>
+          <label for="ingredients" data-i18n="form.ingredients">Ingredients</label>
           <textarea id="ingredients" name="ingredients" rows="4" required></textarea>
 
-          <label for="method">Method</label>
+          <label for="method" data-i18n="form.method">Method</label>
           <textarea id="method" name="method" rows="6" required></textarea>
 
-          <label for="notes">Notes / Tips (optional)</label>
+          <label for="notes" data-i18n="form.notes">Notes / Tips (optional)</label>
           <textarea id="notes" name="notes" rows="3"></textarea>
 
-          <label>Prep Time</label>
+          <label data-i18n="form.prepTime">Prep Time</label>
           <div class="time-input-row">
             <input
               id="prepHours"
@@ -287,7 +295,9 @@
               type="text"
               inputmode="numeric"
               pattern="[0-9]*"
+              data-i18n-placeholder="form.hours"
               placeholder="Hours"
+              data-i18n-aria-label="form.hoursAria.prep"
               aria-label="Prep time hours"
             />
             <input
@@ -296,13 +306,15 @@
               type="text"
               inputmode="numeric"
               pattern="[0-9]*"
+              data-i18n-placeholder="form.minutes"
               placeholder="Minutes"
+              data-i18n-aria-label="form.minutesAria.prep"
               aria-label="Prep time minutes"
             />
           </div>
           <p id="prepTimeWarning" class="time-warning hidden" aria-live="polite"></p>
 
-          <label>Cooking Time</label>
+          <label data-i18n="form.cookingTime">Cooking Time</label>
           <div class="time-input-row">
             <input
               id="cookHours"
@@ -310,7 +322,9 @@
               type="text"
               inputmode="numeric"
               pattern="[0-9]*"
+              data-i18n-placeholder="form.hours"
               placeholder="Hours"
+              data-i18n-aria-label="form.hoursAria.cook"
               aria-label="Cooking time hours"
             />
             <input
@@ -319,34 +333,36 @@
               type="text"
               inputmode="numeric"
               pattern="[0-9]*"
+              data-i18n-placeholder="form.minutes"
               placeholder="Minutes"
+              data-i18n-aria-label="form.minutesAria.cook"
               aria-label="Cooking time minutes"
             />
           </div>
           <p id="cookTimeWarning" class="time-warning hidden" aria-live="polite"></p>
 
-          <label for="totalTime">Total Time</label>
+          <label for="totalTime" data-i18n="form.totalTime">Total Time</label>
           <input id="totalTime" name="totalTime" type="text" readonly />
 
-          <label for="serves">Serves</label>
-          <input id="serves" name="serves" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 4" />
+          <label for="serves" data-i18n="form.serves">Serves</label>
+          <input id="serves" name="serves" type="text" inputmode="numeric" pattern="[0-9]*" data-i18n-placeholder="form.servesPlaceholder" placeholder="e.g. 4" />
           <p id="servesWarning" class="time-warning hidden" aria-live="polite"></p>
 
-          <label for="difficulty">Difficulty</label>
+          <label for="difficulty" data-i18n="form.difficulty">Difficulty</label>
           <div class="difficulty-row">
             <input id="difficulty" name="difficulty" type="range" min="1" max="10" step="1" value="4" />
             <span id="difficultyValue" class="difficulty-value">4</span>
           </div>
 
           <div class="form-actions">
-            <button id="saveRecipeButton" type="submit">Save Recipe</button>
-            <button id="cancelEditButton" class="button button--ghost hidden" type="button">Cancel editing</button>
+            <button id="saveRecipeButton" type="submit" data-i18n="form.save">Save Recipe</button>
+            <button id="cancelEditButton" class="button button--ghost hidden" type="button" data-i18n="form.cancel">Cancel editing</button>
           </div>
         </form>
       </section>
 
       <section id="recipeDetail" class="panel panel--detail hidden" aria-live="polite">
-        <button id="closeDetail" class="button button--secondary" type="button">Back to List</button>
+        <button id="closeDetail" class="button button--secondary" type="button" data-i18n="detail.back">Back to List</button>
         <div id="detailContent"></div>
       </section>
 
@@ -355,41 +371,41 @@
       <div id="mealPlannerModal" class="modal-overlay hidden" aria-hidden="true">
         <div class="modal meal-planner-modal" role="dialog" aria-labelledby="mealPlannerTitle">
           <div class="modal__header">
-            <h2 id="mealPlannerTitle">Meal Planner</h2>
-            <button id="closeMealPlanner" class="icon-button button--ghost" type="button" aria-label="Close meal planner">x</button>
+            <h2 id="mealPlannerTitle" data-i18n="planner.title">Meal Planner</h2>
+            <button id="closeMealPlanner" class="icon-button button--ghost" type="button" data-i18n-aria-label="planner.close" aria-label="Close meal planner">x</button>
           </div>
           <div class="modal__body">
             <div class="meal-planner__week-nav">
-              <button id="mealPlannerPrevWeek" class="button button--ghost" type="button" aria-label="Previous week">&laquo; Prev</button>
+              <button id="mealPlannerPrevWeek" class="button button--ghost" type="button" data-i18n="planner.prevWeek" data-i18n-aria-label="planner.prevWeekAria" aria-label="Previous week">&laquo; Prev</button>
               <span id="mealPlannerWeekLabel" class="meal-planner__week-label"></span>
-              <button id="mealPlannerNextWeek" class="button button--ghost" type="button" aria-label="Next week">Next &raquo;</button>
+              <button id="mealPlannerNextWeek" class="button button--ghost" type="button" data-i18n="planner.nextWeek" data-i18n-aria-label="planner.nextWeekAria" aria-label="Next week">Next &raquo;</button>
             </div>
-            <p class="meal-planner__hint">Click any day to add a meal.</p>
+            <p class="meal-planner__hint" data-i18n="planner.hint">Click any day to add a meal.</p>
             <div id="mealPlannerGrid" class="meal-planner__grid"></div>
           </div>
           <div class="modal__footer">
-            <button id="clearMealPlanner" class="button button--ghost" type="button">Clear Week</button>
+            <button id="clearMealPlanner" class="button button--ghost" type="button" data-i18n="planner.clear">Clear Week</button>
           </div>
         </div>
       </div>
     </main>
 
-    <button id="floatingShoppingList" class="floating-shopping-btn hidden" type="button" aria-label="Open shopping list" title="Shopping List">&#128722;<span id="floatingShoppingCount" class="floating-shopping-btn__count hidden">0</span></button>
+    <button id="floatingShoppingList" class="floating-shopping-btn hidden" type="button" data-i18n-aria-label="shopping.openAria" data-i18n-title="shopping.title" aria-label="Open shopping list" title="Shopping List">&#128722;<span id="floatingShoppingCount" class="floating-shopping-btn__count hidden">0</span></button>
 
     <div id="shoppingListModal" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal shopping-list-modal" role="dialog" aria-labelledby="shoppingListTitle">
         <div class="modal__header">
-          <h2 id="shoppingListTitle">Shopping List</h2>
-          <button id="closeShoppingList" class="icon-button button--ghost" type="button" aria-label="Close shopping list">x</button>
+          <h2 id="shoppingListTitle" data-i18n="shopping.title">Shopping List</h2>
+          <button id="closeShoppingList" class="icon-button button--ghost" type="button" data-i18n-aria-label="shopping.close" aria-label="Close shopping list">x</button>
         </div>
         <div class="modal__body">
-          <p id="shoppingListEmpty" class="empty">No recipes selected. Use the "+ Shopping List" button on a recipe to add ingredients.</p>
+          <p id="shoppingListEmpty" class="empty" data-i18n="shopping.empty">No recipes selected. Use the "+ Shopping List" button on a recipe to add ingredients.</p>
           <div id="shoppingListRecipes" class="shopping-list__recipes hidden"></div>
           <ul id="shoppingListItems" class="shopping-list__items hidden"></ul>
         </div>
         <div class="modal__footer">
-          <button id="clearShoppingList" class="button button--ghost" type="button">Clear All</button>
-          <button id="copyShoppingList" class="button button--secondary" type="button">Copy to Clipboard</button>
+          <button id="clearShoppingList" class="button button--ghost" type="button" data-i18n="shopping.clear">Clear All</button>
+          <button id="copyShoppingList" class="button button--secondary" type="button" data-i18n="shopping.copy">Copy to Clipboard</button>
         </div>
       </div>
     </div>
@@ -398,6 +414,7 @@
     <script defer src="src/js/core/constants.js"></script>
     <script defer src="src/js/core/domRefs.js"></script>
     <script defer src="src/js/core/helpers.js"></script>
+    <script defer src="src/js/core/i18n.js"></script>
     <script defer src="src/js/core/ingredientParser.js"></script>
     <script defer src="src/js/core/appState.js"></script>
     <script defer src="src/js/features/imageManager.js"></script>
@@ -411,6 +428,6 @@
     <script defer src="src/js/features/recipeMetaManager.js"></script>
     <script defer src="src/js/features/recipeRenderer.js"></script>
     <script defer src="src/js/services/supabaseServices.js"></script>
-    <script defer src="app.js?v=20260607a"></script>
+    <script defer src="app.js?v=20260607b"></script>
   </body>
 </html>

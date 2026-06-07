@@ -1,7 +1,8 @@
 (() => {
-  function createImageManager({ dom, state, helpers, getSignedImageUrl }) {
+  function createImageManager({ dom, state, helpers, getSignedImageUrl, i18n }) {
     const { editImageTools, editImagePreview, editImageEmpty, imageUrlInput, clearImageButton, undoImageButton } = dom;
     const { isValidHttpUrl, getDisplayImageUrl } = helpers;
+    const t = i18n ? (k, p) => i18n.t(k, p) : (k) => k;
 
     function clearEditPreviewObjectUrl() {
       if (state.localEditPreviewObjectUrl) {
@@ -24,7 +25,7 @@
       }
       if (editImageEmpty) {
         editImageEmpty.classList.remove("hidden");
-        editImageEmpty.textContent = "No image selected.";
+        editImageEmpty.textContent = t("form.noImage");
       }
       if (imageUrlInput) {
         imageUrlInput.value = "";

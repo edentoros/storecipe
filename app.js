@@ -54,6 +54,7 @@
   const { createRecipeRenderer } = window.StorecipeRecipeRenderer;
   const { createSupabaseServices } = window.StorecipeSupabaseServices;
   const { createAppState } = window.StorecipeAppState;
+  const { createI18n } = window.StorecipeI18n;
   const { createImageManager } = window.StorecipeImageManager;
   const { createSettingsManager } = window.StorecipeSettingsManager;
   const { createAuthUiManager } = window.StorecipeAuthUiManager;
@@ -152,6 +153,10 @@
   } = getDomRefs();
 
   const state = createAppState({ DEFAULT_THEME, DEFAULT_LANGUAGE });
+  const i18n = createI18n({ defaultLocale: DEFAULT_LANGUAGE });
+  const t = (key, params) => i18n.t(key, params);
+  // Apply initial DOM translations as soon as the DOM is parsed (defer scripts run after).
+  i18n.applyToDom(document);
 
   function setStartupLoading(isLoading) {
     state.isStartupLoading = Boolean(isLoading);
@@ -166,7 +171,9 @@
   }
   const normalizeDifficulty = (value) => normalizeDifficultyCore(value, DEFAULT_DIFFICULTY);
   const normalizeStoragePath = (value) => normalizeStoragePathCore(value, BUCKET);
-  const SIGNED_OUT_PROMPT = "Sign into your account or create new account.";
+  // Dynamic, so it re-evaluates on language change.
+  const getSignedOutPrompt = () => t("auth.signInPrompt");
+  const SIGNED_OUT_PROMPT = getSignedOutPrompt();
   const DRAFT_LOCAL_KEY = "storecipe_recipe_draft";
   const supabaseServices = createSupabaseServices({
     config: {
@@ -271,7 +278,7 @@
   function updateImportButtonUi() {
     if (!importRecipeButton) return;
     importRecipeButton.disabled = state.isImportingRecipe;
-    importRecipeButton.textContent = state.isImportingRecipe ? "Importing..." : "Import";
+    importRecipeButton.textContent = state.isImportingRecipe ? t("form.importing") : t("form.importButton");
   }
 
   function applyImportedRecipeToForm(recipe) {
@@ -377,7 +384,27 @@
       fetchLanguagePreferenceViaRest,
       upsertLanguagePreferenceViaRest
     },
-    setAppStatus
+    setAppStatus,
+    i18n,
+    onLanguageChange: () => {
+      // Re-render dynamic views so their dynamic strings pick up the new locale.
+      try { rerenderList(); } catch (_e) {}
+      try { renderShoppingList(); } catch (_e) {}
+      try { renderMealPlanner(); } catch (_e) {}
+      const openId = new URLSearchParams(window.location.search).get("recipe");
+      if (openId && Array.isArray(state.recipes)) {
+        const openRecipe = state.recipes.find((item) => String(item.id) === String(openId));
+        if (openRecipe) {
+          try { showDetail(openRecipe, { scrollToDetail: false }); } catch (_e) {}
+        }
+      }
+      // Sync UI controls that hold dynamic text.
+      try { updateThemeToggleUi(); } catch (_e) {}
+      try { updateImportButtonUi(); } catch (_e) {}
+      try { setToggleAddRecipeState(!addRecipeSection.classList.contains("hidden")); } catch (_e) {}
+      try { setRecipeFormMode(state.editingRecipeId); } catch (_e) {}
+      try { syncDifficultyUi(); } catch (_e) {}
+    }
   });
   const updateLanguageButtonUi = languageManager.updateLanguageButtonUi;
   const setLanguage = languageManager.setLanguage;
@@ -389,7 +416,8 @@
     dom: { editImageTools, editImagePreview, editImageEmpty, imageUrlInput, clearImageButton, undoImageButton },
     state,
     helpers: { isValidHttpUrl, getDisplayImageUrl },
-    getSignedImageUrl
+    getSignedImageUrl,
+    i18n
   });
   const clearEditPreviewObjectUrl = imageManager.clearEditPreviewObjectUrl;
   const hideEditImageTools = imageManager.hideEditImageTools;
@@ -398,14 +426,14 @@
   function setRecipeFormMode(recipe = null) {
     state.editingRecipeId = recipe?.id || null;
     if (recipeFormHeading) {
-      recipeFormHeading.textContent = state.editingRecipeId ? "Edit Recipe" : "Add Recipe";
+      recipeFormHeading.textContent = state.editingRecipeId ? t("form.editTitle") : t("form.addTitle");
     }
     if (saveRecipeButton) {
-      saveRecipeButton.textContent = state.editingRecipeId ? "Update Recipe" : "Save Recipe";
+      saveRecipeButton.textContent = state.editingRecipeId ? t("form.update") : t("form.save");
     }
     if (cancelEditButton) {
       cancelEditButton.classList.remove("hidden");
-      cancelEditButton.textContent = state.editingRecipeId ? "Cancel editing" : "Cancel";
+      cancelEditButton.textContent = state.editingRecipeId ? t("form.cancel") : t("form.cancelShort");
     }
     if (!state.editingRecipeId) {
       hideEditImageTools();
@@ -462,7 +490,7 @@
     getRecipeMetaFromFormData(new FormData(recipeForm), { showStatus: false });
     setAddRecipeOpen(true);
     void refreshEditImageTools(recipe);
-    setAppStatus("Editing recipe. Update fields and click Update Recipe.");
+    setAppStatus(t("status.editingRecipe"));
     saveDraft();
   }
 
@@ -552,7 +580,7 @@
     if (imageUrlInput && draft.imageUrl) imageUrlInput.value = draft.imageUrl;
     getRecipeMetaFromFormData(new FormData(recipeForm), { showStatus: false });
     setAddRecipeOpen(true);
-    setAppStatus("Draft restored. Continue editing or cancel to discard.");
+    setAppStatus(t("status.draftRestored"));
     return true;
   }
 
@@ -563,7 +591,7 @@
     Boolean(searchInput) &&
     Boolean(addRecipeSection);
   if (!hasCoreUi) {
-    setAppStatus("UI mismatch detected. Reload page and ensure latest index.html is running.");
+    setAppStatus(t("status.uiMismatch"));
     return;
   }
 
@@ -594,7 +622,8 @@
       parseTimePair,
       validateServesValue,
       formatDuration
-    }
+    },
+    i18n
   });
   const syncDifficultyUi = recipeMetaManager.syncDifficultyUi;
   const getRecipeMetaFromFormData = recipeMetaManager.getRecipeMetaFromFormData;
@@ -628,7 +657,8 @@
     callbacks: {
       resetRecipeFormState: () => resetRecipeFormState(),
       resetRecipeListLoadingState
-    }
+    },
+    i18n
   });
   const isRecipeUiAvailable = viewManager.isRecipeUiAvailable;
   const setToggleAddRecipeState = viewManager.setToggleAddRecipeState;
@@ -661,7 +691,8 @@
     },
     getSignedImageUrl,
     setDetailOpen,
-    logSupabaseError
+    logSupabaseError,
+    i18n
   });
   const renderList = recipeRenderer.renderList;
   const rawShowDetail = recipeRenderer.showDetail;
@@ -726,9 +757,9 @@
       } catch (error) {
         logSupabaseError("load recipes", error);
         if (isMissingUserIdColumn(error)) {
-          setAppStatus("Database is missing recipes.user_id. Run the security migration SQL.");
+          setAppStatus(t("status.dbMissingUserId"));
         } else {
-          setAppStatus(`Load failed: ${error.message}`);
+          setAppStatus(t("status.loadFailed", { error: error.message }));
         }
         return;
       }
@@ -738,7 +769,7 @@
 
       void hydrateImagesInBackground(state.recipes);
       if (!state.recipes.length) {
-        setAppStatus("No recipes found for this signed-in account.");
+        setAppStatus(t("status.noRecipesForAccount"));
       }
     } finally {
       endRecipeListLoad();
@@ -763,7 +794,7 @@
       state.pendingImageAction === "replace_url" && isValidHttpUrl(state.pendingImageUrl) ? state.pendingImageUrl : null;
 
     if (!title || !ingredients || !method) {
-      setAppStatus("Please fill title, ingredients, and method.");
+      setAppStatus(t("status.fillTIM"));
       return;
     }
 
@@ -793,19 +824,19 @@
     }
 
     if (!state.currentUser) {
-      setAppStatus("Sign in before adding recipes.");
+      setAppStatus(t("status.signInToAdd"));
       return;
     }
 
     let imagePath = null;
     if (imageUrlValue) {
       try {
-        setAppStatus("Fetching image from URL...");
+        setAppStatus(t("status.fetchingImage"));
         const fetchedFile = await fetchExternalImageAsFile(imageUrlValue);
         imagePath = await uploadImage(fetchedFile, state.currentUser.id);
       } catch (error) {
         logSupabaseError("image url fetch", error);
-        setAppStatus(`Image fetch failed: ${error.message || "Unexpected error"}`);
+        setAppStatus(t("status.imageFetchFailed", { error: error.message || "Unexpected error" }));
         return;
       }
     } else if (image instanceof File && image.size > 0) {
@@ -813,7 +844,7 @@
         imagePath = await uploadImage(image, state.currentUser.id);
       } catch (error) {
         logSupabaseError("image upload", error);
-        setAppStatus(`Image upload failed: ${error.message || "Unexpected error"}`);
+        setAppStatus(t("status.imageUploadFailed", { error: error.message || "Unexpected error" }));
         return;
       }
     }
@@ -846,7 +877,7 @@
         }
       }
 
-      setAppStatus(metaWarning || "Recipe saved.");
+      setAppStatus(metaWarning || t("status.recipeSaved"));
       resetRecipeFormState();
       const insertedRecipe = Array.isArray(insertedRows) ? insertedRows[0] : null;
       if (insertedRecipe) {
@@ -871,9 +902,9 @@
     } catch (error) {
       logSupabaseError("insert recipe", error);
       if (isMissingUserIdColumn(error)) {
-        setAppStatus("Save failed: recipes.user_id column is missing. Run migration SQL.");
+        setAppStatus(t("status.dbMissingUserId"));
       } else {
-        setAppStatus(`Save failed: ${error.message}`);
+        setAppStatus(t("status.saveFailed", { error: error.message }));
       }
     }
   }
@@ -886,7 +917,7 @@
 
     const existingRecipe = state.recipes.find((item) => item.id === state.editingRecipeId);
     if (!existingRecipe) {
-      setAppStatus("Could not find recipe to edit. Refresh and try again.");
+      setAppStatus(t("status.couldNotEdit"));
       return;
     }
 
@@ -906,7 +937,7 @@
     const removeCurrentImage = state.pendingImageAction === "remove";
 
     if (!title || !ingredients || !method) {
-      setAppStatus("Please fill title, ingredients, and method.");
+      setAppStatus(t("status.fillTIM"));
       return;
     }
 
@@ -936,12 +967,12 @@
       resetRecipeFormState();
       rerenderList();
       showDetail(updatedLocalRecipe);
-      setAppStatus("Recipe updated.");
+      setAppStatus(t("status.recipeUpdated"));
       return;
     }
 
     if (!state.currentUser) {
-      setAppStatus("Sign in before updating recipes.");
+      setAppStatus(t("status.signInToUpdate"));
       return;
     }
 
@@ -953,18 +984,18 @@
         uploadedNewImage = true;
       } catch (error) {
         logSupabaseError("image upload", error);
-        setAppStatus(`Image upload failed: ${error.message || "Unexpected error"}`);
+        setAppStatus(t("status.imageUploadFailed", { error: error.message || "Unexpected error" }));
         return;
       }
     } else if (selectedImageUrl) {
       try {
-        setAppStatus("Fetching image from URL...");
+        setAppStatus(t("status.fetchingImage"));
         const fetchedFile = await fetchExternalImageAsFile(selectedImageUrl);
         nextImagePath = await uploadImage(fetchedFile, state.currentUser.id);
         uploadedNewImage = true;
       } catch (error) {
         logSupabaseError("image url fetch", error);
-        setAppStatus(`Image fetch failed: ${error.message || "Unexpected error"}`);
+        setAppStatus(t("status.imageFetchFailed", { error: error.message || "Unexpected error" }));
         return;
       }
     } else if (removeCurrentImage) {
@@ -1037,15 +1068,15 @@
       resetRecipeFormState();
       rerenderList();
       showDetail(hydratedUpdatedRecipe);
-      setAppStatus(metaWarning || "Recipe updated.");
+      setAppStatus(metaWarning || t("status.recipeUpdated"));
     } catch (error) {
       logSupabaseError("update recipe", error);
-      setAppStatus(`Update failed: ${error.message || "Unexpected error"}`);
+      setAppStatus(t("status.updateFailed", { error: error.message || "Unexpected error" }));
     }
   }
 
   async function deleteRecipe(id) {
-    const confirmed = window.confirm("Delete this recipe?");
+    const confirmed = window.confirm(t("status.confirmDelete"));
     if (!confirmed) return;
 
     if (!hasSupabaseConfig) {
@@ -1058,7 +1089,7 @@
     }
 
     if (!state.currentUser) {
-      setAppStatus("Sign in before deleting recipes.");
+      setAppStatus(t("status.signInToDelete"));
       return;
     }
 
@@ -1072,11 +1103,11 @@
 
     const { error } = await client.from("recipes").delete().eq("id", id).eq("user_id", state.currentUser.id);
     if (error) {
-      setAppStatus(`Delete failed: ${error.message}`);
+      setAppStatus(t("status.deleteFailed", { error: error.message }));
       return;
     }
 
-    setAppStatus("Recipe deleted.");
+    setAppStatus(t("status.recipeDeleted"));
     setDetailOpen(false);
     clearRecipeUrl();
     await loadRecipes();
@@ -1088,7 +1119,7 @@
   }
 
   async function resendConfirmation(email) {
-    setAuthLoading(true, "Resending confirmation...");
+    setAuthLoading(true, t("auth.resending"));
     try {
       const siteUrl = window.location.origin;
       const { error } = await client.auth.resend({
@@ -1097,9 +1128,9 @@
         options: { emailRedirectTo: `${siteUrl}/confirm.html` }
       });
       if (error) {
-        setAppStatus(`Could not resend: ${error.message}`);
+        setAppStatus(t("status.couldNotResend", { error: error.message }));
       } else {
-        setAppStatus("Confirmation email sent! Check your inbox.");
+        setAppStatus(t("status.confirmEmail"));
       }
     } finally {
       setAuthLoading(false);
@@ -1107,7 +1138,7 @@
   }
 
   function showEmailNotConfirmedUi(email) {
-    setAuthStatus("Your email address has not been confirmed yet.");
+    setAuthStatus(t("auth.emailNotConfirmed"));
     setAppStatus("");
     const existing = document.getElementById("resendConfirmRow");
     if (existing) existing.remove();
@@ -1127,7 +1158,7 @@
   }
 
   async function signIn(email, password) {
-    setAuthLoading(true, "Signing in...");
+    setAuthLoading(true, t("auth.signingIn"));
     try {
       const { error } = await client.auth.signInWithPassword({ email, password });
       if (error) {
@@ -1135,13 +1166,13 @@
           showEmailNotConfirmedUi(email);
           return;
         }
-        setAuthStatus(`Sign-in failed: ${error.message}`, { isError: true });
-        setAppStatus(`Sign-in failed: ${error.message}`);
+        setAuthStatus(t("auth.signInFailedShort", { error: error.message }), { isError: true });
+        setAppStatus(t("status.signInFailed", { error: error.message }));
         return;
       }
       const existing = document.getElementById("resendConfirmRow");
       if (existing) existing.remove();
-      setAppStatus("Signed in.");
+      setAppStatus(t("status.signedInShort"));
     } finally {
       setAuthLoading(false);
       setAuthUi();
@@ -1211,7 +1242,7 @@
   }
 
   async function signUp(email, password) {
-    setAuthLoading(true, "Creating account...");
+    setAuthLoading(true, t("auth.signingUp"));
     try {
       const siteUrl = window.location.origin;
       const { error } = await client.auth.signUp({
@@ -1220,8 +1251,8 @@
         options: { emailRedirectTo: `${siteUrl}/confirm.html` }
       });
       if (error) {
-        setAuthStatus(`Sign-up failed: ${error.message}`, { isError: true });
-        setAppStatus(`Sign-up failed: ${error.message}`);
+        setAuthStatus(t("auth.signUpFailedShort", { error: error.message }), { isError: true });
+        setAppStatus(t("status.signUpFailed", { error: error.message }));
         return;
       }
       window.location.href = "confirm.html";
@@ -1231,12 +1262,12 @@
   }
 
   async function signOut() {
-    setAuthLoading(true, "Signing out...");
+    setAuthLoading(true, t("auth.signingOut"));
     try {
       const { error } = await client.auth.signOut();
       if (error) {
-        setAuthStatus(`Sign-out failed: ${error.message}`, { isError: true });
-        setAppStatus(`Sign-out failed: ${error.message}`);
+        setAuthStatus(t("auth.signOutFailedShort", { error: error.message }), { isError: true });
+        setAppStatus(t("status.signOutFailed", { error: error.message }));
         return;
       }
       setAppStatus("");
@@ -1251,7 +1282,7 @@
 
     const url = recipeImportUrlInput?.value?.trim() || "";
     if (!isValidHttpUrl(url)) {
-      setAppStatus("Enter a valid recipe URL (http/https) to import.");
+      setAppStatus(t("status.invalidImportUrl"));
       return;
     }
 
@@ -1261,7 +1292,7 @@
 
     state.isImportingRecipe = true;
     updateImportButtonUi();
-    setAppStatus("Importing recipe from link...");
+    setAppStatus(t("status.importing"));
 
     try {
       const data = await importRecipeFromUrlViaFunction(url, prompt);
@@ -1272,13 +1303,13 @@
 
       applyImportedRecipeToForm(importedRecipe);
       const source = normalizeImportedText(importedRecipe.source_url) || url;
-      setAppStatus(`Recipe imported from ${source}. Review and save.`);
+      setAppStatus(t("status.importedFrom", { source }));
     } catch (error) {
       const message = String(error?.message || "Unexpected error");
       if (message.includes("404")) {
-        setAppStatus('Import failed: deploy the Supabase function "recipe-import" first.');
+        setAppStatus(t("status.importFailed", { error: 'deploy the Supabase function "recipe-import" first' }));
       } else {
-        setAppStatus(`Import failed: ${message}`);
+        setAppStatus(t("status.importFailed", { error: message }));
       }
     } finally {
       state.isImportingRecipe = false;
@@ -1292,7 +1323,7 @@
 
     if (isSignUpMode) {
       setSignUpMode(false);
-      setAuthStatus(SIGNED_OUT_PROMPT);
+      setAuthStatus(getSignedOutPrompt());
     }
 
     const email = authEmail.value.trim();
@@ -1306,7 +1337,7 @@
 
     if (!isSignUpMode) {
       setSignUpMode(true);
-      setAuthStatus("Create a new account.");
+      setAuthStatus(t("auth.createPrompt"));
       if (authPassword) authPassword.focus();
       return;
     }
@@ -1318,18 +1349,18 @@
     const confirmPassword = authConfirmPassword ? authConfirmPassword.value : "";
 
     if (!email || !password) {
-      setAppStatus("Enter email and password to sign up.");
+      setAppStatus(t("status.signUpEnterCreds"));
       return;
     }
 
     const passwordErrors = getPasswordErrors(password);
     if (passwordErrors.length > 0) {
-      setAppStatus(`Password must have: ${passwordErrors.join(", ").toLowerCase()}.`);
+      setAppStatus(t("status.passwordReq", { errors: passwordErrors.join(", ").toLowerCase() }));
       return;
     }
 
     if (password !== confirmPassword) {
-      setAppStatus("Passwords do not match.");
+      setAppStatus(t("status.passwordsDoNotMatch"));
       if (authConfirmPassword) authConfirmPassword.focus();
       return;
     }
@@ -1374,7 +1405,7 @@
     resetImportPromptButton.addEventListener("click", () => {
       setImportPromptUi(DEFAULT_RECIPE_IMPORT_PROMPT);
       persistImportPrompt(DEFAULT_RECIPE_IMPORT_PROMPT);
-      setAppStatus("Import prompt reset.");
+      setAppStatus(t("status.importPromptReset"));
     });
   }
 
@@ -1504,12 +1535,12 @@
     if (!recipeForm.checkValidity()) {
       recipeForm.reportValidity();
       if (!hasInlineMetaWarning) {
-        setAppStatus("Please fill all required fields before saving.");
+        setAppStatus(t("status.fillAllRequired"));
       }
       return;
     }
 
-    setAppStatus(state.editingRecipeId ? "Updating recipe..." : "Saving recipe...");
+    setAppStatus(state.editingRecipeId ? t("status.updating") : t("status.saving"));
     const formData = new FormData(recipeForm);
 
     try {
@@ -1519,14 +1550,14 @@
         await addRecipe(formData);
       }
     } catch (error) {
-      setAppStatus(`Save failed: ${error.message || "Unexpected error"}`);
+      setAppStatus(t("status.saveFailed", { error: error.message || "Unexpected error" }));
     }
   });
 
   recipeForm.addEventListener(
     "invalid",
     () => {
-      setAppStatus("Please fill all required fields before saving.");
+      setAppStatus(t("status.fillAllRequired"));
     },
     true
   );
@@ -1543,7 +1574,7 @@
       );
       if (!recipeForm.checkValidity()) {
         if (!hasInlineMetaWarning) {
-          setAppStatus("Please fill all required fields before saving.");
+          setAppStatus(t("status.fillAllRequired"));
         }
       }
     });
@@ -1565,7 +1596,7 @@
         setAddRecipeOpen(false);
       }
 
-      setAppStatus(isEditing ? "Edit canceled." : "Recipe add canceled.");
+      setAppStatus(isEditing ? t("status.editCanceled") : t("status.addCanceled"));
     });
   }
 
@@ -1671,7 +1702,7 @@
       } else {
         state.pendingImageAction = "keep";
         state.pendingImageUrl = "";
-        setAppStatus("Enter a valid image URL (http/https).");
+        setAppStatus(t("status.invalidImageUrl"));
       }
 
       const recipe = state.recipes.find((item) => item.id === state.editingRecipeId) || null;
@@ -1713,7 +1744,7 @@
 
       const recipe = state.recipes.find((item) => item.id === state.editingRecipeId) || null;
       void refreshEditImageTools(recipe);
-      setAppStatus("Image change undone.");
+      setAppStatus(t("status.imageUndone"));
     });
   }
 
@@ -1788,7 +1819,7 @@
     if (!recipe) return;
 
     if (!hasSupabaseConfig || !state.currentUser) {
-      setAppStatus("Sharing requires a Supabase connection and sign-in.");
+      setAppStatus(t("status.sharingRequiresAuth"));
       return;
     }
 
@@ -1803,17 +1834,17 @@
       if (recipe.is_public && recipe.share_token) {
         const url = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}share.html?token=${recipe.share_token}`;
         try { await navigator.clipboard.writeText(url); } catch (_) { /* ignore */ }
-        setAppStatus("Share link copied to clipboard!");
+        setAppStatus(t("status.shareLinkCopied"));
       } else {
-        setAppStatus("Recipe is no longer shared.");
+        setAppStatus(t("status.shareDisabled"));
       }
     } catch (error) {
       if (error?.message?.includes("column") || error?.message?.includes("is_public") || error?.message?.includes("share_token")) {
         state.hasShareColumns = false;
-        setAppStatus("Sharing requires database columns. Run the SQL migration.");
+        setAppStatus(t("status.sharingDbMissing"));
       } else {
         logSupabaseError("toggle share", error);
-        setAppStatus("Could not toggle sharing.");
+        setAppStatus(t("status.couldNotShare"));
       }
     }
     showDetail(recipe, { scrollToDetail: false });
@@ -1852,7 +1883,7 @@
     shoppingListRecipes.innerHTML = selectedRecipes.map((r) =>
       `<div class="shopping-list__recipe-tag">
         <span>${escapeHtml(r.title)}</span>
-        <button type="button" class="shopping-list__remove-recipe" data-id="${r.id}" aria-label="Remove ${escapeHtml(r.title)}">&times;</button>
+        <button type="button" class="shopping-list__remove-recipe" data-id="${r.id}" aria-label="${escapeHtml(t("shopping.clear"))}">&times;</button>
       </div>`
     ).join("");
 
@@ -1944,7 +1975,7 @@
       state.shoppingListRecipeIds.push(recipeId);
     }
     openShoppingListModal();
-    setAppStatus("Recipe added to shopping list.");
+    setAppStatus(t("status.recipeAddedToShopping"));
   }
 
   if (openShoppingList) {
@@ -1980,9 +2011,9 @@
       if (!lines.length) return;
       try {
         await navigator.clipboard.writeText(lines.join("\n"));
-        setAppStatus("Shopping list copied to clipboard!");
+        setAppStatus(t("status.copiedClipboard"));
       } catch (_) {
-        setAppStatus("Could not copy to clipboard.");
+        setAppStatus(t("status.copyFailed"));
       }
     });
   }
@@ -2002,7 +2033,7 @@
     const uid = state.currentUser?.id || "local";
     return `${MEAL_PLAN_KEY_PREFIX}_${uid}`;
   }
-  const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const DAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
   let mealPlannerWeekOffset = 0;
 
   function getMondayOfWeek(offset) {
@@ -2036,7 +2067,8 @@
     const monday = getMondayOfWeek(mealPlannerWeekOffset);
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
-    const fmt = (d) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    const weekLocale = (state.currentLanguage === "ru") ? "ru-RU" : "en-GB";
+    const fmt = (d) => d.toLocaleDateString(weekLocale, { day: "numeric", month: "short" });
     if (mealPlannerWeekLabel) {
       mealPlannerWeekLabel.textContent = `${fmt(monday)} – ${fmt(sunday)}`;
     }
@@ -2049,49 +2081,51 @@
       const today = new Date();
       const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
       const recipeOptions = state.recipes
-        .map((r) => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.title || "Untitled")}</option>`)
+        .map((r) => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.title || t("planner.untitled"))}</option>`)
         .join("");
-      mealPlannerGrid.innerHTML = DAY_NAMES.map((dayName, i) => {
+      mealPlannerGrid.innerHTML = DAY_KEYS.map((dayKeySuffix, i) => {
+        const dayName = t(`planner.day.${dayKeySuffix}`);
         const dayDate = new Date(monday);
         dayDate.setDate(monday.getDate() + i);
         const dayKey = `${dayDate.getFullYear()}-${dayDate.getMonth()}-${dayDate.getDate()}`;
         const isToday = dayKey === todayKey;
-        const dateStr = dayDate.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+        const localeForDate = (state.currentLanguage === "ru") ? "ru-RU" : "en-GB";
+        const dateStr = dayDate.toLocaleDateString(localeForDate, { day: "numeric", month: "short" });
         const meals = weekPlan[i] || [];
         const mealsHtml = meals.map((recipeId, mealIdx) => {
           const recipe = state.recipes.find((r) => r.id === recipeId);
-          const title = recipe ? escapeHtml(recipe.title) : "Unknown recipe";
+          const title = recipe ? escapeHtml(recipe.title) : escapeHtml(t("planner.unknownRecipe"));
           return `<div class="meal-planner__meal">
             <span class="meal-planner__meal-title">${title}</span>
-            <button type="button" class="meal-planner__remove-meal" data-day="${i}" data-meal-idx="${mealIdx}" aria-label="Remove">&times;</button>
+            <button type="button" class="meal-planner__remove-meal" data-day="${i}" data-meal-idx="${mealIdx}" aria-label="${escapeHtml(t("planner.removeMeal"))}">&times;</button>
           </div>`;
         }).join("");
         const dayClasses = `meal-planner__day${isToday ? " meal-planner__day--today" : ""}`;
-        const todayBadge = isToday ? '<span class="meal-planner__today-badge">Today</span>' : "";
+        const todayBadge = isToday ? `<span class="meal-planner__today-badge">${escapeHtml(t("planner.today"))}</span>` : "";
         const pickerHtml = state.recipes.length
           ? `<div class="meal-planner__picker hidden" data-picker-day="${i}">
-              <select class="meal-planner__picker-select" aria-label="Choose recipe">
-                <option value="">-- Pick a recipe --</option>
+              <select class="meal-planner__picker-select" aria-label="${escapeHtml(t("planner.chooseRecipeAria"))}">
+                <option value="">${escapeHtml(t("planner.pickRecipe"))}</option>
                 ${recipeOptions}
               </select>
               <div class="meal-planner__picker-actions">
-                <button type="button" class="button button--secondary meal-planner__picker-confirm" data-day="${i}">Add</button>
-                <button type="button" class="button button--ghost meal-planner__picker-cancel" data-day="${i}">Cancel</button>
+                <button type="button" class="button button--secondary meal-planner__picker-confirm" data-day="${i}">${escapeHtml(t("planner.add"))}</button>
+                <button type="button" class="button button--ghost meal-planner__picker-cancel" data-day="${i}">${escapeHtml(t("planner.cancel"))}</button>
               </div>
             </div>`
           : `<div class="meal-planner__picker hidden" data-picker-day="${i}">
-              <p class="meal-planner__picker-empty">No recipes yet. Add a recipe first.</p>
+              <p class="meal-planner__picker-empty">${escapeHtml(t("planner.noRecipes"))}</p>
               <div class="meal-planner__picker-actions">
-                <button type="button" class="button button--ghost meal-planner__picker-cancel" data-day="${i}">Close</button>
+                <button type="button" class="button button--ghost meal-planner__picker-cancel" data-day="${i}">${escapeHtml(t("planner.close"))}</button>
               </div>
             </div>`;
         return `<div class="${dayClasses}" data-day="${i}">
           <button type="button" class="meal-planner__day-header" data-action="toggle-picker" data-day="${i}">
-            <strong>${dayName}${todayBadge}</strong> <small>${dateStr}</small>
+            <strong>${escapeHtml(dayName)}${todayBadge}</strong> <small>${escapeHtml(dateStr)}</small>
             <span class="meal-planner__add-icon" aria-hidden="true">+</span>
           </button>
           <div class="meal-planner__day-meals" data-day="${i}">
-            ${mealsHtml || '<span class="meal-planner__empty">No meals planned</span>'}
+            ${mealsHtml || `<span class="meal-planner__empty">${escapeHtml(t("planner.noMeals"))}</span>`}
           </div>
           ${pickerHtml}
         </div>`;
@@ -2177,7 +2211,7 @@
         const select = picker?.querySelector(".meal-planner__picker-select");
         const recipeId = select?.value;
         if (!recipeId) {
-          setAppStatus("Pick a recipe first.");
+          setAppStatus(t("status.pickRecipeFirst"));
           return;
         }
         const weekKey = getWeekKey(mealPlannerWeekOffset);
@@ -2251,7 +2285,8 @@
       renderList: rerenderList,
       saveLocalRecipes,
       isMissingRecipeMetaColumns
-    }
+    },
+    i18n
   });
   inlineEditManager.attachListeners();
 
@@ -2325,7 +2360,7 @@
         }
         getRecipeMetaFromFormData(new FormData(recipeForm), { showStatus: false });
         setAddRecipeOpen(true);
-        setAppStatus("Recipe duplicated. Edit and save as a new recipe.");
+        setAppStatus(t("status.recipeDuplicated"));
       }
       return;
     }

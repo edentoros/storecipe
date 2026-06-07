@@ -1,7 +1,8 @@
 (() => {
-  function createInlineEditManager({ dom, state, config, helpers, supabaseServices, callbacks }) {
+  function createInlineEditManager({ dom, state, config, helpers, supabaseServices, callbacks, i18n }) {
     const { detailContent, searchInput } = dom;
     const { DEFAULT_DIFFICULTY, hasSupabaseConfig } = config;
+    const t = i18n ? (k, p) => i18n.t(k, p) : (k) => k;
     const {
       parseDurationText, formatDuration, sanitizeDigits, parseTimePair,
       normalizeOptionalText, getDirectImageUrl, normalizeDifficulty
@@ -28,21 +29,21 @@
     function getInlineFieldLabel(field) {
       switch (field) {
         case "ingredients":
-          return "ingredients";
+          return t("inlineEdit.field.ingredients");
         case "method":
-          return "method";
+          return t("inlineEdit.field.method");
         case "notes":
-          return "notes";
+          return t("inlineEdit.field.notes");
         case "description":
-          return "description";
+          return t("inlineEdit.field.description");
         case "prep_time":
-          return "prep time";
+          return t("inlineEdit.field.prepTime");
         case "cooking_time":
-          return "cooking time";
+          return t("inlineEdit.field.cookingTime");
         case "difficulty":
-          return "difficulty";
+          return t("inlineEdit.field.difficulty");
         default:
-          return "field";
+          return t("inlineEdit.field.field");
       }
     }
 
@@ -112,7 +113,7 @@
       const normalizedField = normalizeInlineEditableField(field);
       if (!normalizedField) return;
       if (isInlineMetaField(normalizedField) && !state.hasRecipeMetaColumns) {
-        setAppStatus("Timing and difficulty fields need DB migration before inline editing.");
+        setAppStatus(t("inlineEdit.migrationNeeded"));
         return;
       }
 
@@ -241,14 +242,14 @@
       saveButton.className = "button button--secondary";
       saveButton.dataset.action = "inline-save-field";
       saveButton.dataset.field = normalizedField;
-      saveButton.textContent = "Save";
+      saveButton.textContent = t("inlineEdit.save");
 
       const cancelButton = document.createElement("button");
       cancelButton.type = "button";
       cancelButton.className = "button button--ghost";
       cancelButton.dataset.action = "inline-cancel-field";
       cancelButton.dataset.field = normalizedField;
-      cancelButton.textContent = "Cancel";
+      cancelButton.textContent = t("inlineEdit.cancel");
 
       actions.append(saveButton, cancelButton);
       editor.append(actions);
@@ -260,14 +261,14 @@
       if (focusTarget instanceof HTMLTextAreaElement) {
         focusTarget.setSelectionRange(focusTarget.value.length, focusTarget.value.length);
       }
-      setAppStatus(`Editing ${getInlineFieldLabel(normalizedField)}. Click Save to apply.`);
+      setAppStatus(t("inlineEdit.editing", { label: getInlineFieldLabel(normalizedField) }));
     }
 
     async function saveInlineDetailField(field) {
       const normalizedField = normalizeInlineEditableField(field);
       if (!normalizedField) return false;
       if (isInlineMetaField(normalizedField) && !state.hasRecipeMetaColumns) {
-        setAppStatus("Timing and difficulty fields need DB migration before inline editing.");
+        setAppStatus(t("inlineEdit.migrationNeeded"));
         return false;
       }
 
@@ -291,7 +292,7 @@
         const value = String(valueInput.value ?? "").trim();
         const allowEmpty = normalizedField === "notes" || normalizedField === "description";
         if (!value && !allowEmpty) {
-          setAppStatus(`Please add ${label} before saving.`);
+          setAppStatus(t("inlineEdit.pleaseAdd", { label }));
           return false;
         }
         payload = { [normalizedField]: value || (allowEmpty ? null : "") };
@@ -335,7 +336,7 @@
 
       if (!hasChanges) {
         showDetail(recipe, { scrollToDetail: false });
-        setAppStatus(`No changes to ${label}.`);
+        setAppStatus(t("inlineEdit.noChanges", { label }));
         return true;
       }
 
@@ -345,12 +346,12 @@
         saveLocalRecipes(state.recipes);
         renderList();
         showDetail(updatedLocalRecipe, { scrollToDetail: false });
-        setAppStatus(`${label.charAt(0).toUpperCase()}${label.slice(1)} updated.`);
+        setAppStatus(t("inlineEdit.fieldUpdated", { label: label.charAt(0).toUpperCase() + label.slice(1) }));
         return true;
       }
 
       if (!state.currentUser) {
-        setAppStatus("Sign in before updating recipes.");
+        setAppStatus(t("status.signInToUpdate"));
         return false;
       }
 
@@ -369,16 +370,16 @@
         state.recipes = state.recipes.map((item) => (item.id === recipe.id ? hydratedUpdatedRecipe : item));
         renderList();
         showDetail(hydratedUpdatedRecipe, { scrollToDetail: false });
-        setAppStatus(`${label.charAt(0).toUpperCase()}${label.slice(1)} updated.`);
+        setAppStatus(t("inlineEdit.fieldUpdated", { label: label.charAt(0).toUpperCase() + label.slice(1) }));
         return true;
       } catch (error) {
         if (isInlineMetaField(normalizedField) && state.hasRecipeMetaColumns && isMissingRecipeMetaColumns(error)) {
           state.hasRecipeMetaColumns = false;
-          setAppStatus("Update failed: run DB migration for timing and difficulty fields.");
+          setAppStatus(t("inlineEdit.updateFailedMigration"));
           return false;
         }
         logSupabaseError("inline update recipe field", error);
-        setAppStatus(`Update failed: ${error.message || "Unexpected error"}`);
+        setAppStatus(t("inlineEdit.updateFailed", { error: error.message || "Unexpected error" }));
         return false;
       }
     }
@@ -400,7 +401,7 @@
           if (inlineCancelButton instanceof HTMLButtonElement) {
             inlineCancelButton.disabled = true;
           }
-          setAppStatus(`Updating ${getInlineFieldLabel(normalizedField)}...`);
+          setAppStatus(t("inlineEdit.updating", { label: getInlineFieldLabel(normalizedField) }));
           try {
             await saveInlineDetailField(normalizedField);
           } finally {
@@ -419,7 +420,7 @@
           if (recipe) {
             showDetail(recipe, { scrollToDetail: false });
           }
-          setAppStatus("Inline edit canceled.");
+          setAppStatus(t("inlineEdit.canceled"));
           return;
         }
 
@@ -443,7 +444,7 @@
           if (recipe) {
             showDetail(recipe, { scrollToDetail: false });
           }
-          setAppStatus("Inline edit canceled.");
+          setAppStatus(t("inlineEdit.canceled"));
           return;
         }
 

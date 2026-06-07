@@ -1,5 +1,5 @@
 (() => {
-  function createLanguageManager({ dom, state, config, helpers, supabaseServices, setAppStatus }) {
+  function createLanguageManager({ dom, state, config, helpers, supabaseServices, setAppStatus, i18n, onLanguageChange }) {
     const { languageSelector, languageToggleButton, languageMenu } = dom;
     const {
       DEFAULT_LANGUAGE,
@@ -64,10 +64,25 @@
     function setLanguage(language, options = {}) {
       const { persistForCurrentUser = true } = options;
       const normalizedLanguage = normalizeLanguage(language);
+      const isChange = state.currentLanguage !== normalizedLanguage;
       state.currentLanguage = normalizedLanguage;
 
       document.documentElement.setAttribute("lang", normalizedLanguage);
+      if (i18n && typeof i18n.setLocale === "function") {
+        i18n.setLocale(normalizedLanguage);
+        if (typeof i18n.applyToDom === "function") {
+          i18n.applyToDom(document);
+        }
+      }
       updateLanguageButtonUi();
+
+      if (isChange && typeof onLanguageChange === "function") {
+        try {
+          onLanguageChange(normalizedLanguage);
+        } catch (_err) {
+          /* ignore re-render errors */
+        }
+      }
 
       if (persistForCurrentUser) {
         const key = state.currentUser?.id
@@ -128,7 +143,7 @@
       } catch (error) {
         if (isMissingLanguageColumn(error) || isMissingPreferencesTable(error)) {
           state.isLanguagePreferenceAvailable = false;
-          setAppStatus("Language prefs not set up. Run SQL to add `language` column to user_preferences.");
+          setAppStatus(i18n ? i18n.t("status.languageMissing") : "Language prefs not set up.");
         }
       }
     }
@@ -145,12 +160,13 @@
         if (isMissingLanguageColumn(error) || isMissingPreferencesTable(error)) {
           state.isLanguagePreferenceAvailable = false;
           if (!quiet) {
-            setAppStatus("Language saved locally. Add `language` column to user_preferences to sync.");
+            setAppStatus(i18n ? i18n.t("status.languageLocalOnly") : "Language saved locally.");
           }
           return;
         }
         if (!quiet) {
-          setAppStatus(`Language save failed: ${error.message || "Unexpected error"}`);
+          const msg = error.message || "Unexpected error";
+          setAppStatus(i18n ? i18n.t("status.languageSaveFailed", { error: msg }) : `Language save failed: ${msg}`);
         }
       }
     }

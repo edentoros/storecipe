@@ -5,20 +5,26 @@ function createRecipeRenderer({
   helpers,
   getSignedImageUrl,
   setDetailOpen,
-  logSupabaseError
+  logSupabaseError,
+  i18n
 }) {
   const { recipeList, detailContent, recipeDetail } = dom;
   const {
     formatDate,
     escapeHtml,
     normalizeDifficulty,
-    getDifficultyLabel,
     parseDurationText,
     formatDuration,
     getDisplayImageUrl,
     getDirectImageUrl,
     scaleIngredients
   } = helpers;
+  const t = i18n ? (key, params) => i18n.t(key, params) : (key) => key;
+  const tCategory = i18n && i18n.formatCategory ? (v) => i18n.formatCategory(v) : (v) => {
+    const s = String(v || "");
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+  };
+  const tDifficulty = i18n && i18n.getDifficultyLabel ? (n) => i18n.getDifficultyLabel(n) : (helpers.getDifficultyLabel || ((n) => String(n)));
 
   function patchRecipeCardImage(recipe) {
     if (!recipe?.id || !recipe?._resolvedImageUrl) return;
@@ -38,7 +44,7 @@ function createRecipeRenderer({
 
     const image = document.createElement("img");
     image.src = recipe._resolvedImageUrl;
-    image.alt = String(recipe.title ?? "Recipe image");
+    image.alt = String(recipe.title ?? t("card.untitled"));
     image.loading = "lazy";
     image.dataset.action = "view";
     image.dataset.id = recipe.id;
@@ -63,7 +69,7 @@ function createRecipeRenderer({
 
     const image = document.createElement("img");
     image.src = recipe._resolvedImageUrl;
-    image.alt = String(recipe.title ?? "Recipe image");
+    image.alt = String(recipe.title ?? t("card.untitled"));
     placeholder.replaceWith(image);
   }
 
@@ -133,12 +139,12 @@ function createRecipeRenderer({
       if (!filtered.length) {
         const empty = document.createElement("p");
         empty.className = "empty";
-        empty.textContent = state.currentUser || !hasSupabaseConfig ? "No recipes found." : "Sign in to view your recipes.";
+        empty.textContent = state.currentUser || !hasSupabaseConfig ? t("list.empty") : t("list.signInPrompt");
         recipeList.appendChild(empty);
       } else {
         filtered.forEach((recipe) => {
           const safeImageUrl = getDisplayImageUrl(recipe);
-          const title = String(recipe.title ?? "Untitled recipe");
+          const title = String(recipe.title ?? t("card.untitled"));
 
           const article = document.createElement("article");
           article.className = "recipe-card";
@@ -149,7 +155,7 @@ function createRecipeRenderer({
           favButton.type = "button";
           favButton.dataset.action = "toggle-fav";
           favButton.dataset.id = recipe.id || "";
-          favButton.setAttribute("aria-label", recipe.is_favourite ? "Remove from favourites" : "Add to favourites");
+          favButton.setAttribute("aria-label", recipe.is_favourite ? t("card.removeFav") : t("card.addFav"));
           favButton.innerHTML = recipe.is_favourite ? "&#9829;" : "&#9825;";
           article.appendChild(favButton);
 
@@ -192,7 +198,7 @@ function createRecipeRenderer({
           if (recipe.category) {
             const badge = document.createElement("span");
             badge.className = "recipe-card__category-badge";
-            badge.textContent = capitalize(recipe.category);
+            badge.textContent = tCategory(recipe.category);
             body.appendChild(badge);
           }
 
@@ -209,11 +215,11 @@ function createRecipeRenderer({
           const totalTimeValue = totalMinutes > 0 ? formatDuration(totalMinutes) : storedTotalTime;
           const servesValue = String(recipe.serves ?? recipe.servings ?? "").trim();
           const difficultyNum = normalizeDifficulty(recipe.difficulty, 4);
-          const difficultyLevel = `${difficultyNum} — ${getDifficultyLabel(difficultyNum)}`;
+          const difficultyLevel = `${difficultyNum} — ${tDifficulty(difficultyNum)}`;
           const metaItems = [
-            { label: "Total Time", value: totalTimeValue },
-            { label: "Serves", value: servesValue },
-            { label: "Difficulty", value: difficultyLevel }
+            { label: t("card.totalTime"), value: totalTimeValue },
+            { label: t("card.serves"), value: servesValue },
+            { label: t("card.difficulty"), value: difficultyLevel }
           ].filter((item) => Boolean(item.value));
 
           if (metaItems.length) {
@@ -236,7 +242,7 @@ function createRecipeRenderer({
           button.type = "button";
           button.dataset.action = "view";
           button.dataset.id = recipe.id || "";
-          button.textContent = "View";
+          button.textContent = t("card.view");
           body.appendChild(button);
 
           article.appendChild(body);
@@ -245,7 +251,7 @@ function createRecipeRenderer({
       }
 
     } catch (error) {
-      recipeList.innerHTML = '<p class="empty">Could not render recipes.</p>';
+      recipeList.innerHTML = `<p class="empty">${escapeHtml(t("list.renderError"))}</p>`;
     }
   }
 
@@ -267,38 +273,42 @@ function createRecipeRenderer({
       const totalTime = recipe.total_time ?? recipe.totalTime ?? computedTotalTime;
       const serves = recipe.serves ?? recipe.servings ?? "";
       const difficultyNum = normalizeDifficulty(recipe.difficulty, 4);
-      const difficulty = `${difficultyNum} — ${getDifficultyLabel(difficultyNum)}`;
+      const difficulty = `${difficultyNum} — ${tDifficulty(difficultyNum)}`;
       const metaItems = [
-        { label: "Prep Time", value: toMetaText(prepTime), field: "prep_time", editable: true },
-        { label: "Cooking Time", value: toMetaText(cookingTime), field: "cooking_time", editable: true },
-        { label: "Total Time", value: toMetaText(totalTime) },
-        { label: "Serves", value: toMetaText(serves) },
-        { label: "Difficulty", value: toMetaText(difficulty), field: "difficulty", editable: true }
+        { label: t("detail.metaPrep"), value: toMetaText(prepTime), field: "prep_time", editable: true, editAria: t("detail.editPrepTime") },
+        { label: t("detail.metaCook"), value: toMetaText(cookingTime), field: "cooking_time", editable: true, editAria: t("detail.editCookingTime") },
+        { label: t("detail.metaTotal"), value: toMetaText(totalTime) },
+        { label: t("detail.metaServes"), value: toMetaText(serves) },
+        { label: t("detail.metaDifficulty"), value: toMetaText(difficulty), field: "difficulty", editable: true, editAria: t("detail.editDifficulty") }
       ].filter((item) => Boolean(item.value));
       const renderMetaItem = (item) => {
         if (item.editable && item.field) {
-          const ariaLabel = `Click to edit ${item.label.toLowerCase()}`;
-          return `<p class="recipe-detail-card__meta-item recipe-detail-card__meta-item--editable"><button class="inline-edit-trigger" data-action="inline-edit-field" data-field="${item.field}" type="button" aria-label="${ariaLabel}"><strong>${item.label}:</strong> <span data-field-content="${item.field}">${item.value}</span></button></p>`;
+          const ariaLabel = item.editAria || item.label;
+          return `<p class="recipe-detail-card__meta-item recipe-detail-card__meta-item--editable"><button class="inline-edit-trigger" data-action="inline-edit-field" data-field="${item.field}" type="button" aria-label="${escapeHtml(ariaLabel)}"><strong>${escapeHtml(item.label)}:</strong> <span data-field-content="${item.field}">${item.value}</span></button></p>`;
         }
-        return `<p class="recipe-detail-card__meta-item"><strong>${item.label}:</strong> ${item.value}</p>`;
+        return `<p class="recipe-detail-card__meta-item"><strong>${escapeHtml(item.label)}:</strong> ${item.value}</p>`;
       };
       const metaHtml = metaItems.length
         ? `
-        <div class="recipe-detail-card__meta" aria-label="Recipe timing and servings">
+        <div class="recipe-detail-card__meta" aria-label="${escapeHtml(t("detail.metaLabel"))}">
           ${metaItems.map((item) => renderMetaItem(item)).join("")}
         </div>`
         : "";
       const imageHtml = resolvedImageUrl
-        ? `<button type="button" class="recipe-detail-card__image-wrap" data-action="open-image-fullview" data-image-url="${escapeHtml(resolvedImageUrl)}" data-image-alt="${escapeHtml(recipe.title)}" aria-label="View full image" style="--detail-img: url('${escapeHtml(resolvedImageUrl)}')"><img src="${escapeHtml(resolvedImageUrl)}" alt="${escapeHtml(recipe.title)}" /></button>`
+        ? `<button type="button" class="recipe-detail-card__image-wrap" data-action="open-image-fullview" data-image-url="${escapeHtml(resolvedImageUrl)}" data-image-alt="${escapeHtml(recipe.title)}" aria-label="${escapeHtml(t("detail.fullImage"))}" style="--detail-img: url('${escapeHtml(resolvedImageUrl)}')"><img src="${escapeHtml(resolvedImageUrl)}" alt="${escapeHtml(recipe.title)}" /></button>`
         : '<div class="recipe-detail-card__image recipe-detail-card__image--placeholder" aria-hidden="true"></div>';
 
       const categoryHtml = recipe.category
-        ? `<span class="recipe-detail-card__category-badge">${escapeHtml(capitalize(recipe.category))}</span>`
+        ? `<span class="recipe-detail-card__category-badge">${escapeHtml(tCategory(recipe.category))}</span>`
         : "";
       const favActive = recipe.is_favourite;
       const favHeart = favActive ? "&#9829;" : "&#9825;";
-      const favLabel = favActive ? "Remove from favourites" : "Add to favourites";
+      const favLabel = favActive ? t("card.removeFav") : t("card.addFav");
       const favClass = "recipe-detail-card__fav-button" + (favActive ? " recipe-detail-card__fav-button--active" : "");
+      const dateLine =
+        recipe.updated_at && recipe.updated_at !== recipe.created_at
+          ? t("detail.addedUpdated", { added: formatDate(recipe.created_at), updated: formatDate(recipe.updated_at) })
+          : t("detail.added", { date: formatDate(recipe.created_at) });
 
       detailContent.innerHTML = `
       <article class="recipe-detail-card">
@@ -306,30 +316,30 @@ function createRecipeRenderer({
         <div class="recipe-detail-card__header">
           <div class="recipe-detail-card__title-row">
             <h2>${escapeHtml(recipe.title)}</h2>
-            <button class="${favClass}" type="button" data-action="toggle-fav" data-id="${recipe.id}" aria-label="${favLabel}">${favHeart}</button>
+            <button class="${favClass}" type="button" data-action="toggle-fav" data-id="${recipe.id}" aria-label="${escapeHtml(favLabel)}">${favHeart}</button>
           </div>
-          <p class="recipe-detail-card__date">Added ${formatDate(recipe.created_at)}${recipe.updated_at && recipe.updated_at !== recipe.created_at ? ` · Updated ${formatDate(recipe.updated_at)}` : ""} ${categoryHtml}</p>
+          <p class="recipe-detail-card__date">${escapeHtml(dateLine)} ${categoryHtml}</p>
           ${recipe.description ? `<button
             class="inline-edit-trigger recipe-detail-card__description"
             data-action="inline-edit-field"
             data-field="description"
             data-field-content="description"
             type="button"
-            aria-label="Click to edit description"
-          >${escapeHtml(recipe.description).replace(/\n/g, "<br />")}</button>` : `<button class="button button--ghost recipe-detail-card__add-description" type="button" data-action="inline-edit-field" data-field="description" data-id="${recipe.id}">+ Add Description</button>`}
+            aria-label="${escapeHtml(t("detail.editDescription"))}"
+          >${escapeHtml(recipe.description).replace(/\n/g, "<br />")}</button>` : `<button class="button button--ghost recipe-detail-card__add-description" type="button" data-action="inline-edit-field" data-field="description" data-id="${recipe.id}">${escapeHtml(t("detail.addDescription"))}</button>`}
         </div>
         ${metaHtml}
 
         <section class="recipe-detail-card__section" data-field="ingredients">
           <h3 class="recipe-detail-card__editable-title">
-            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="ingredients" type="button" aria-label="Click to edit ingredients">Ingredients</button>
+            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="ingredients" type="button" aria-label="${escapeHtml(t("detail.editIngredients"))}">${escapeHtml(t("detail.ingredients"))}</button>
           </h3>
           ${serves ? `<div class="serving-scaler" data-original-serves="${escapeHtml(String(serves))}" data-original-ingredients="${escapeHtml(recipe.ingredients)}">
-            <button type="button" class="serving-scaler__btn" data-action="scale-down" aria-label="Decrease servings">&minus;</button>
+            <button type="button" class="serving-scaler__btn" data-action="scale-down" aria-label="${escapeHtml(t("detail.scaleDown"))}">&minus;</button>
             <span class="serving-scaler__value" data-scale-display>${escapeHtml(String(serves))}</span>
-            <span class="serving-scaler__label">servings</span>
-            <button type="button" class="serving-scaler__btn" data-action="scale-up" aria-label="Increase servings">&plus;</button>
-            <button type="button" class="serving-scaler__reset button--ghost" data-action="scale-reset">Reset</button>
+            <span class="serving-scaler__label">${escapeHtml(t("detail.servings"))}</span>
+            <button type="button" class="serving-scaler__btn" data-action="scale-up" aria-label="${escapeHtml(t("detail.scaleUp"))}">&plus;</button>
+            <button type="button" class="serving-scaler__reset button--ghost" data-action="scale-reset">${escapeHtml(t("detail.scaleReset"))}</button>
           </div>` : ""}
           <button
             class="inline-edit-trigger recipe-detail-card__editable"
@@ -337,13 +347,13 @@ function createRecipeRenderer({
             data-field="ingredients"
             data-field-content="ingredients"
             type="button"
-            aria-label="Click to edit ingredients"
+            aria-label="${escapeHtml(t("detail.editIngredients"))}"
           >${escapeHtml(recipe.ingredients).replace(/\n/g, "<br />")}</button>
         </section>
 
         <section class="recipe-detail-card__section" data-field="method">
           <h3 class="recipe-detail-card__editable-title">
-            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="method" type="button" aria-label="Click to edit method">Method</button>
+            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="method" type="button" aria-label="${escapeHtml(t("detail.editMethod"))}">${escapeHtml(t("detail.method"))}</button>
           </h3>
           <button
             class="inline-edit-trigger recipe-detail-card__editable"
@@ -351,13 +361,13 @@ function createRecipeRenderer({
             data-field="method"
             data-field-content="method"
             type="button"
-            aria-label="Click to edit method"
+            aria-label="${escapeHtml(t("detail.editMethod"))}"
           >${escapeHtml(recipe.method).replace(/\n/g, "<br />")}</button>
         </section>
 
         ${recipe.notes ? `<section class="recipe-detail-card__section" data-field="notes">
           <h3 class="recipe-detail-card__editable-title">
-            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="notes" type="button" aria-label="Click to edit notes">Notes / Tips</button>
+            <button class="inline-edit-trigger" data-action="inline-edit-field" data-field="notes" type="button" aria-label="${escapeHtml(t("detail.editNotes"))}">${escapeHtml(t("detail.notes"))}</button>
           </h3>
           <button
             class="inline-edit-trigger recipe-detail-card__editable"
@@ -365,28 +375,28 @@ function createRecipeRenderer({
             data-field="notes"
             data-field-content="notes"
             type="button"
-            aria-label="Click to edit notes"
+            aria-label="${escapeHtml(t("detail.editNotes"))}"
           >${escapeHtml(recipe.notes).replace(/\n/g, "<br />")}</button>
-        </section>` : `<button class="button button--ghost recipe-detail-card__add-notes" type="button" data-action="inline-edit-field" data-field="notes" data-id="${recipe.id}">+ Add Notes / Tips</button>`}
+        </section>` : `<button class="button button--ghost recipe-detail-card__add-notes" type="button" data-action="inline-edit-field" data-field="notes" data-id="${recipe.id}">${escapeHtml(t("detail.addNotes"))}</button>`}
 
         <div class="recipe-detail-card__actions">
           <button class="button button--secondary" type="button" data-action="edit" data-id="${recipe.id}">
-            Edit Recipe
+            ${escapeHtml(t("detail.edit"))}
           </button>
           <button class="button button--secondary hidden" type="button" data-action="duplicate" data-id="${recipe.id}">
-            Duplicate
+            ${escapeHtml(t("detail.duplicate"))}
           </button>
           <button class="button button--secondary hidden" type="button" data-action="share" data-id="${recipe.id}">
-            Share
+            ${escapeHtml(t("detail.share"))}
           </button>
           <button class="button button--secondary recipe-detail-card__print-button" type="button" onclick="window.print()">
-            Print
+            ${escapeHtml(t("detail.print"))}
           </button>
           <button class="button button--secondary" type="button" data-action="add-to-shopping" data-id="${recipe.id}">
-            + Shopping List
+            ${escapeHtml(t("detail.addToShopping"))}
           </button>
           <button class="button button--danger" type="button" data-action="delete" data-id="${recipe.id}">
-            Delete Recipe
+            ${escapeHtml(t("detail.delete"))}
           </button>
         </div>
       </article>

@@ -1,0 +1,703 @@
+(() => {
+  const DICTIONARIES = {
+    en: {
+      "app.loading": "Loading Storecipe...",
+      "app.title": "Storecipe",
+
+      // Header tools
+      "header.shopping": "Shopping",
+      "header.shoppingTitle": "Open shopping list",
+      "header.planner": "Planner",
+      "header.plannerTitle": "Open meal planner",
+      "header.settings": "Settings",
+
+      // Auth panel
+      "auth.title": "Account",
+      "auth.close": "Close settings",
+      "auth.signInPrompt": "Sign into your account or create new account.",
+      "auth.email": "Email",
+      "auth.password": "Password",
+      "auth.confirmPassword": "Confirm Password",
+      "auth.confirmPasswordPlaceholder": "Confirm password",
+      "auth.signIn": "Sign In",
+      "auth.signUp": "Sign Up",
+      "auth.signOut": "Sign Out",
+      "auth.signingIn": "Signing in...",
+      "auth.signingUp": "Creating account...",
+      "auth.signingOut": "Signing out...",
+      "auth.resending": "Resending confirmation...",
+      "auth.emailNotConfirmed": "Your email address has not been confirmed yet.",
+      "auth.createPrompt": "Create a new account.",
+      "auth.signInFailedShort": "Sign-in failed: {error}",
+      "auth.signUpFailedShort": "Sign-up failed: {error}",
+      "auth.signOutFailedShort": "Sign-out failed: {error}",
+
+      // Language / theme
+      "language.label": "Language",
+      "theme.light": "Theme: Light",
+      "theme.dark": "Theme: Dark",
+      "theme.sunset": "Theme: Sunset",
+
+      // Search
+      "search.title": "Search Recipes",
+      "search.placeholder": "Search by title...",
+      "search.allCategories": "All categories",
+      "search.favourites": "♡ Favourites",
+      "search.favouritesTitle": "Show favourites only",
+      "search.filterCategory": "Filter by category",
+      "search.sortLabel": "Sort recipes",
+
+      // Sort options
+      "sort.newest": "Newest first",
+      "sort.oldest": "Oldest first",
+      "sort.titleAZ": "Name (A–Z)",
+      "sort.titleZA": "Name (Z–A)",
+      "sort.easiest": "Easiest first",
+      "sort.hardest": "Hardest first",
+
+      // Category names
+      "category.none": "None",
+      "category.breakfast": "Breakfast",
+      "category.lunch": "Lunch",
+      "category.dinner": "Dinner",
+      "category.soups": "Soups",
+      "category.snack": "Snack",
+      "category.dessert": "Dessert",
+      "category.drinks": "Drinks",
+      "category.other": "Other",
+
+      // Recipe list
+      "list.title": "Recipe List",
+      "list.showAdd": "Show Add Recipe",
+      "list.hideAdd": "Hide Add Recipe",
+      "list.addNew": "Add new",
+      "list.empty": "No recipes found.",
+      "list.signInPrompt": "Sign in to view your recipes.",
+      "list.renderError": "Could not render recipes.",
+
+      // Recipe form
+      "form.addTitle": "Add Recipe",
+      "form.editTitle": "Edit Recipe",
+      "form.title": "Title",
+      "form.description": "Description (optional)",
+      "form.descriptionPlaceholder": "A short summary shown on the recipe card",
+      "form.category": "Category",
+      "form.importUrlLabel": "Import from recipe link",
+      "form.importUrlPlaceholder": "Paste recipe URL (https://...)",
+      "form.importButton": "Import",
+      "form.importing": "Importing...",
+      "form.importPrompt": "Import prompt",
+      "form.importPromptPlaceholder": "Prompt used to structure extracted recipe text",
+      "form.resetImportPrompt": "Reset prompt",
+      "form.image": "Image",
+      "form.uploadImage": "Upload new image",
+      "form.imageUrl": "Or paste image URL",
+      "form.deleteImage": "Delete image",
+      "form.undoImage": "Undo",
+      "form.noImage": "No image selected.",
+      "form.ingredients": "Ingredients",
+      "form.method": "Method",
+      "form.notes": "Notes / Tips (optional)",
+      "form.prepTime": "Prep Time",
+      "form.cookingTime": "Cooking Time",
+      "form.totalTime": "Total Time",
+      "form.serves": "Serves",
+      "form.servesPlaceholder": "e.g. 4",
+      "form.difficulty": "Difficulty",
+      "form.hours": "Hours",
+      "form.minutes": "Minutes",
+      "form.hoursAria.prep": "Prep time hours",
+      "form.minutesAria.prep": "Prep time minutes",
+      "form.hoursAria.cook": "Cooking time hours",
+      "form.minutesAria.cook": "Cooking time minutes",
+      "form.save": "Save Recipe",
+      "form.update": "Update Recipe",
+      "form.saving": "Saving...",
+      "form.cancel": "Cancel editing",
+      "form.cancelShort": "Cancel",
+
+      // Recipe card
+      "card.untitled": "Untitled recipe",
+      "card.view": "View",
+      "card.addFav": "Add to favourites",
+      "card.removeFav": "Remove from favourites",
+      "card.totalTime": "Total Time",
+      "card.serves": "Serves",
+      "card.difficulty": "Difficulty",
+
+      // Recipe detail
+      "detail.back": "Back to List",
+      "detail.added": "Added {date}",
+      "detail.addedUpdated": "Added {added} · Updated {updated}",
+      "detail.addDescription": "+ Add Description",
+      "detail.addNotes": "+ Add Notes / Tips",
+      "detail.ingredients": "Ingredients",
+      "detail.method": "Method",
+      "detail.notes": "Notes / Tips",
+      "detail.servings": "servings",
+      "detail.scaleReset": "Reset",
+      "detail.scaleUp": "Increase servings",
+      "detail.scaleDown": "Decrease servings",
+      "detail.fullImage": "View full image",
+      "detail.edit": "Edit Recipe",
+      "detail.duplicate": "Duplicate",
+      "detail.share": "Share",
+      "detail.print": "Print",
+      "detail.addToShopping": "+ Shopping List",
+      "detail.delete": "Delete Recipe",
+      "detail.metaLabel": "Recipe timing and servings",
+      "detail.editPrepTime": "Click to edit prep time",
+      "detail.editCookingTime": "Click to edit cooking time",
+      "detail.editDifficulty": "Click to edit difficulty",
+      "detail.editDescription": "Click to edit description",
+      "detail.editIngredients": "Click to edit ingredients",
+      "detail.editMethod": "Click to edit method",
+      "detail.editNotes": "Click to edit notes",
+      "detail.metaPrep": "Prep Time",
+      "detail.metaCook": "Cooking Time",
+      "detail.metaTotal": "Total Time",
+      "detail.metaServes": "Serves",
+      "detail.metaDifficulty": "Difficulty",
+
+      // Difficulty labels
+      "difficulty.veryEasy": "Very Easy",
+      "difficulty.easy": "Easy",
+      "difficulty.medium": "Medium",
+      "difficulty.hard": "Hard",
+      "difficulty.veryHard": "Very Hard",
+      "difficulty.expert": "Expert",
+
+      // Shopping list
+      "shopping.title": "Shopping List",
+      "shopping.close": "Close shopping list",
+      "shopping.empty": "No recipes selected. Use the \"+ Shopping List\" button on a recipe to add ingredients.",
+      "shopping.clear": "Clear All",
+      "shopping.copy": "Copy to Clipboard",
+      "shopping.openAria": "Open shopping list",
+
+      // Meal planner
+      "planner.title": "Meal Planner",
+      "planner.close": "Close meal planner",
+      "planner.prevWeek": "« Prev",
+      "planner.nextWeek": "Next »",
+      "planner.prevWeekAria": "Previous week",
+      "planner.nextWeekAria": "Next week",
+      "planner.hint": "Click any day to add a meal.",
+      "planner.clear": "Clear Week",
+      "planner.today": "Today",
+      "planner.noMeals": "No meals planned",
+      "planner.pickRecipe": "-- Pick a recipe --",
+      "planner.chooseRecipeAria": "Choose recipe",
+      "planner.add": "Add",
+      "planner.cancel": "Cancel",
+      "planner.close": "Close",
+      "planner.noRecipes": "No recipes yet. Add a recipe first.",
+      "planner.unknownRecipe": "Unknown recipe",
+      "planner.untitled": "Untitled",
+      "planner.removeMeal": "Remove",
+      "planner.day.monday": "Monday",
+      "planner.day.tuesday": "Tuesday",
+      "planner.day.wednesday": "Wednesday",
+      "planner.day.thursday": "Thursday",
+      "planner.day.friday": "Friday",
+      "planner.day.saturday": "Saturday",
+      "planner.day.sunday": "Sunday",
+
+      // Inline edit
+      "inlineEdit.save": "Save",
+      "inlineEdit.cancel": "Cancel",
+      "inlineEdit.saving": "Saving...",
+      "inlineEdit.field.ingredients": "ingredients",
+      "inlineEdit.field.method": "method",
+      "inlineEdit.field.notes": "notes",
+      "inlineEdit.field.description": "description",
+      "inlineEdit.field.prepTime": "prep time",
+      "inlineEdit.field.cookingTime": "cooking time",
+      "inlineEdit.field.difficulty": "difficulty",
+      "inlineEdit.field.field": "field",
+      "inlineEdit.editing": "Editing {label}. Click Save to apply.",
+      "inlineEdit.pleaseAdd": "Please add {label} before saving.",
+      "inlineEdit.noChanges": "No changes to {label}.",
+      "inlineEdit.fieldUpdated": "{label} updated.",
+      "inlineEdit.updating": "Updating {label}...",
+      "inlineEdit.canceled": "Inline edit canceled.",
+      "inlineEdit.migrationNeeded": "Timing and difficulty fields need DB migration before inline editing.",
+      "inlineEdit.updateFailedMigration": "Update failed: run DB migration for timing and difficulty fields.",
+      "inlineEdit.updateFailed": "Update failed: {error}",
+
+      // Statuses / toasts
+      "status.recipeAdded": "Recipe added",
+      "status.recipeSaved": "Recipe saved",
+      "status.recipeDeleted": "Recipe deleted",
+      "status.recipeUpdated": "Recipe updated",
+      "status.signedIn": "Signed in",
+      "status.signedOut": "Signed out",
+      "status.signUpSuccess": "Account created. Check your inbox to confirm your email.",
+      "status.signedInAs": "Signed in as {email}",
+      "status.importPromptReset": "Import prompt reset.",
+      "status.copied": "Shopping list copied to clipboard.",
+      "status.copyFailed": "Could not copy to clipboard.",
+      "status.shoppingCleared": "Shopping list cleared.",
+      "status.plannerCleared": "Meal planner cleared for the week.",
+      "status.signedOutPrompt": "Sign into your account or create new account.",
+      "status.confirmDelete": "Delete this recipe?",
+      "status.passwordMismatch": "Passwords do not match.",
+      "status.passwordTooShort": "Password must be at least 8 characters.",
+      "status.emailRequired": "Email is required.",
+      "status.fillRequired": "Please fill in the required fields.",
+      "status.recipeNotFound": "Recipe not found.",
+      "status.importing": "Importing recipe...",
+      "status.importFailed": "Recipe import failed: {error}",
+      "status.imported": "Recipe imported. Review and save.",
+      "status.saveFailed": "Save failed: {error}",
+      "status.deleteFailed": "Delete failed: {error}",
+      "status.loadFailed": "Could not load recipes: {error}",
+      "status.invalidUrl": "Please enter a valid URL.",
+      "status.signInFailed": "Sign in failed: {error}",
+      "status.signUpFailed": "Sign up failed: {error}",
+      "status.signOutFailed": "Sign out failed: {error}",
+      "status.themeMissing": "Theme prefs table missing. Run SQL setup to save theme per user.",
+      "status.themeLocalOnly": "Theme saved locally. Run SQL setup to sync theme to Supabase.",
+      "status.languageMissing": "Language prefs not set up. Run SQL to add `language` column to user_preferences.",
+      "status.languageLocalOnly": "Language saved locally. Add `language` column to user_preferences to sync.",
+      "status.languageSaveFailed": "Language save failed: {error}",
+      "status.editingPrompt": "Editing recipe. Update fields and click Update Recipe.",
+      "status.draftRestored": "Draft restored. Continue editing or cancel to discard.",
+      "status.fillTIM": "Please fill title, ingredients, and method.",
+      "status.signInToAdd": "Sign in before adding recipes.",
+      "status.signInToUpdate": "Sign in before updating recipes.",
+      "status.signInToDelete": "Sign in before deleting recipes.",
+      "status.fetchingImage": "Fetching image from URL...",
+      "status.imageFetchFailed": "Image fetch failed: {error}",
+      "status.imageUploadFailed": "Image upload failed: {error}",
+      "status.saving": "Saving recipe...",
+      "status.updating": "Updating recipe...",
+      "status.updateFailed": "Update failed: {error}",
+      "status.recipeAddedToShopping": "Recipe added to shopping list.",
+      "status.copiedClipboard": "Shopping list copied to clipboard!",
+      "status.importedFrom": "Recipe imported from {source}. Review and save.",
+      "status.editCanceled": "Edit canceled.",
+      "status.addCanceled": "Recipe add canceled.",
+      "status.imageUndone": "Image change undone.",
+      "status.invalidImageUrl": "Enter a valid image URL (http/https).",
+      "status.invalidImportUrl": "Enter a valid recipe URL (http/https) to import.",
+      "status.signedInShort": "Signed in.",
+      "status.confirmEmail": "Confirmation email sent! Check your inbox.",
+      "status.couldNotResend": "Could not resend: {error}",
+      "status.pickRecipeFirst": "Pick a recipe first.",
+      "status.recipeDuplicated": "Recipe duplicated. Edit and save as a new recipe.",
+      "status.fillAllRequired": "Please fill all required fields before saving.",
+      "status.passwordsDoNotMatch": "Passwords do not match.",
+      "status.passwordReq": "Password must have: {errors}.",
+      "status.signUpEnterCreds": "Enter email and password to sign up.",
+      "status.sharingRequiresAuth": "Sharing requires a Supabase connection and sign-in.",
+      "status.shareLinkCopied": "Share link copied to clipboard!",
+      "status.shareDisabled": "Recipe is no longer shared.",
+      "status.couldNotShare": "Could not toggle sharing.",
+      "status.sharingDbMissing": "Sharing requires database columns. Run the SQL migration.",
+      "status.couldNotEdit": "Could not find recipe to edit. Refresh and try again.",
+      "status.uiMismatch": "UI mismatch detected. Reload page and ensure latest index.html is running.",
+      "status.editingRecipe": "Editing recipe. Update fields and click Update Recipe.",
+      "status.noRecipesForAccount": "No recipes found for this signed-in account.",
+      "status.dbMissingUserId": "Database is missing recipes.user_id. Run the security migration SQL.",
+      "validation.hoursMax": "{label}: hours cannot be more than 10.",
+      "validation.minutesMax": "{label}: minutes cannot be more than 60.",
+      "validation.timeRequired": "{label}: enter a valid value greater than 0.",
+      "validation.servesWhole": "Serves: use whole numbers only.",
+      "validation.servesRange": "Serves: enter a whole number from 1 to 15."
+    },
+
+    ru: {
+      "app.loading": "Загрузка Storecipe...",
+      "app.title": "Storecipe",
+
+      "header.shopping": "Покупки",
+      "header.shoppingTitle": "Открыть список покупок",
+      "header.planner": "Планировщик",
+      "header.plannerTitle": "Открыть планировщик питания",
+      "header.settings": "Настройки",
+
+      "auth.title": "Аккаунт",
+      "auth.close": "Закрыть настройки",
+      "auth.signInPrompt": "Войдите в аккаунт или создайте новый.",
+      "auth.email": "Эл. почта",
+      "auth.password": "Пароль",
+      "auth.confirmPassword": "Подтвердите пароль",
+      "auth.confirmPasswordPlaceholder": "Подтвердите пароль",
+      "auth.signIn": "Войти",
+      "auth.signUp": "Зарегистрироваться",
+      "auth.signOut": "Выйти",
+      "auth.signingIn": "Вход...",
+      "auth.signingUp": "Создание аккаунта...",
+      "auth.signingOut": "Выход...",
+      "auth.resending": "Повторная отправка подтверждения...",
+      "auth.emailNotConfirmed": "Ваш email ещё не подтверждён.",
+      "auth.createPrompt": "Создайте новый аккаунт.",
+      "auth.signInFailedShort": "Ошибка входа: {error}",
+      "auth.signUpFailedShort": "Ошибка регистрации: {error}",
+      "auth.signOutFailedShort": "Ошибка выхода: {error}",
+
+      "language.label": "Язык",
+      "theme.light": "Тема: Светлая",
+      "theme.dark": "Тема: Тёмная",
+      "theme.sunset": "Тема: Закат",
+
+      "search.title": "Поиск рецептов",
+      "search.placeholder": "Поиск по названию...",
+      "search.allCategories": "Все категории",
+      "search.favourites": "♡ Избранное",
+      "search.favouritesTitle": "Показать только избранное",
+      "search.filterCategory": "Фильтр по категории",
+      "search.sortLabel": "Сортировать рецепты",
+
+      "sort.newest": "Сначала новые",
+      "sort.oldest": "Сначала старые",
+      "sort.titleAZ": "Название (А–Я)",
+      "sort.titleZA": "Название (Я–А)",
+      "sort.easiest": "Сначала лёгкие",
+      "sort.hardest": "Сначала сложные",
+
+      "category.none": "Без категории",
+      "category.breakfast": "Завтрак",
+      "category.lunch": "Обед",
+      "category.dinner": "Ужин",
+      "category.soups": "Супы",
+      "category.snack": "Перекус",
+      "category.dessert": "Десерт",
+      "category.drinks": "Напитки",
+      "category.other": "Другое",
+
+      "list.title": "Список рецептов",
+      "list.showAdd": "Показать форму добавления",
+      "list.hideAdd": "Скрыть форму добавления",
+      "list.addNew": "Добавить",
+      "list.empty": "Рецепты не найдены.",
+      "list.signInPrompt": "Войдите, чтобы увидеть свои рецепты.",
+      "list.renderError": "Не удалось отобразить рецепты.",
+
+      "form.addTitle": "Добавить рецепт",
+      "form.editTitle": "Редактировать рецепт",
+      "form.title": "Название",
+      "form.description": "Описание (необязательно)",
+      "form.descriptionPlaceholder": "Краткое описание для карточки рецепта",
+      "form.category": "Категория",
+      "form.importUrlLabel": "Импорт по ссылке",
+      "form.importUrlPlaceholder": "Вставьте ссылку на рецепт (https://...)",
+      "form.importButton": "Импортировать",
+      "form.importing": "Импорт...",
+      "form.importPrompt": "Промпт для импорта",
+      "form.importPromptPlaceholder": "Промпт для структурирования извлечённого текста рецепта",
+      "form.resetImportPrompt": "Сбросить промпт",
+      "form.image": "Изображение",
+      "form.uploadImage": "Загрузить изображение",
+      "form.imageUrl": "Или вставьте URL изображения",
+      "form.deleteImage": "Удалить изображение",
+      "form.undoImage": "Отменить",
+      "form.noImage": "Изображение не выбрано.",
+      "form.ingredients": "Ингредиенты",
+      "form.method": "Способ приготовления",
+      "form.notes": "Заметки / Советы (необязательно)",
+      "form.prepTime": "Время подготовки",
+      "form.cookingTime": "Время приготовления",
+      "form.totalTime": "Общее время",
+      "form.serves": "Порций",
+      "form.servesPlaceholder": "напр. 4",
+      "form.difficulty": "Сложность",
+      "form.hours": "Часы",
+      "form.minutes": "Минуты",
+      "form.hoursAria.prep": "Часы подготовки",
+      "form.minutesAria.prep": "Минуты подготовки",
+      "form.hoursAria.cook": "Часы приготовления",
+      "form.minutesAria.cook": "Минуты приготовления",
+      "form.save": "Сохранить рецепт",
+      "form.update": "Обновить рецепт",
+      "form.saving": "Сохранение...",
+      "form.cancel": "Отменить редактирование",
+      "form.cancelShort": "Отмена",
+
+      "card.untitled": "Рецепт без названия",
+      "card.view": "Открыть",
+      "card.addFav": "Добавить в избранное",
+      "card.removeFav": "Убрать из избранного",
+      "card.totalTime": "Общее время",
+      "card.serves": "Порций",
+      "card.difficulty": "Сложность",
+
+      "detail.back": "Назад к списку",
+      "detail.added": "Добавлено {date}",
+      "detail.addedUpdated": "Добавлено {added} · Обновлено {updated}",
+      "detail.addDescription": "+ Добавить описание",
+      "detail.addNotes": "+ Добавить заметки / советы",
+      "detail.ingredients": "Ингредиенты",
+      "detail.method": "Способ приготовления",
+      "detail.notes": "Заметки / Советы",
+      "detail.servings": "порц.",
+      "detail.scaleReset": "Сброс",
+      "detail.scaleUp": "Увеличить порции",
+      "detail.scaleDown": "Уменьшить порции",
+      "detail.fullImage": "Открыть изображение",
+      "detail.edit": "Редактировать рецепт",
+      "detail.duplicate": "Дублировать",
+      "detail.share": "Поделиться",
+      "detail.print": "Печать",
+      "detail.addToShopping": "+ В список покупок",
+      "detail.delete": "Удалить рецепт",
+      "detail.metaLabel": "Время и порции",
+      "detail.editPrepTime": "Нажмите, чтобы изменить время подготовки",
+      "detail.editCookingTime": "Нажмите, чтобы изменить время приготовления",
+      "detail.editDifficulty": "Нажмите, чтобы изменить сложность",
+      "detail.editDescription": "Нажмите, чтобы изменить описание",
+      "detail.editIngredients": "Нажмите, чтобы изменить ингредиенты",
+      "detail.editMethod": "Нажмите, чтобы изменить способ приготовления",
+      "detail.editNotes": "Нажмите, чтобы изменить заметки",
+      "detail.metaPrep": "Время подготовки",
+      "detail.metaCook": "Время приготовления",
+      "detail.metaTotal": "Общее время",
+      "detail.metaServes": "Порций",
+      "detail.metaDifficulty": "Сложность",
+
+      "difficulty.veryEasy": "Очень легко",
+      "difficulty.easy": "Легко",
+      "difficulty.medium": "Средне",
+      "difficulty.hard": "Сложно",
+      "difficulty.veryHard": "Очень сложно",
+      "difficulty.expert": "Эксперт",
+
+      "shopping.title": "Список покупок",
+      "shopping.close": "Закрыть список покупок",
+      "shopping.empty": "Рецепты не выбраны. Нажмите «+ В список покупок» на рецепте, чтобы добавить ингредиенты.",
+      "shopping.clear": "Очистить всё",
+      "shopping.copy": "Копировать в буфер",
+      "shopping.openAria": "Открыть список покупок",
+
+      "planner.title": "Планировщик питания",
+      "planner.close": "Закрыть планировщик",
+      "planner.prevWeek": "« Назад",
+      "planner.nextWeek": "Вперёд »",
+      "planner.prevWeekAria": "Предыдущая неделя",
+      "planner.nextWeekAria": "Следующая неделя",
+      "planner.hint": "Нажмите на любой день, чтобы добавить блюдо.",
+      "planner.clear": "Очистить неделю",
+      "planner.today": "Сегодня",
+      "planner.noMeals": "Блюд не запланировано",
+      "planner.pickRecipe": "-- Выберите рецепт --",
+      "planner.chooseRecipeAria": "Выбрать рецепт",
+      "planner.add": "Добавить",
+      "planner.cancel": "Отмена",
+      "planner.close": "Закрыть",
+      "planner.noRecipes": "Пока нет рецептов. Сначала добавьте рецепт.",
+      "planner.unknownRecipe": "Неизвестный рецепт",
+      "planner.untitled": "Без названия",
+      "planner.removeMeal": "Удалить",
+      "planner.day.monday": "Понедельник",
+      "planner.day.tuesday": "Вторник",
+      "planner.day.wednesday": "Среда",
+      "planner.day.thursday": "Четверг",
+      "planner.day.friday": "Пятница",
+      "planner.day.saturday": "Суббота",
+      "planner.day.sunday": "Воскресенье",
+
+      "inlineEdit.save": "Сохранить",
+      "inlineEdit.cancel": "Отменить",
+      "inlineEdit.saving": "Сохранение...",
+      "inlineEdit.field.ingredients": "ингредиенты",
+      "inlineEdit.field.method": "способ приготовления",
+      "inlineEdit.field.notes": "заметки",
+      "inlineEdit.field.description": "описание",
+      "inlineEdit.field.prepTime": "время подготовки",
+      "inlineEdit.field.cookingTime": "время приготовления",
+      "inlineEdit.field.difficulty": "сложность",
+      "inlineEdit.field.field": "поле",
+      "inlineEdit.editing": "Редактирование: {label}. Нажмите «Сохранить».",
+      "inlineEdit.pleaseAdd": "Пожалуйста, добавьте {label} перед сохранением.",
+      "inlineEdit.noChanges": "Без изменений ({label}).",
+      "inlineEdit.fieldUpdated": "{label} обновлено.",
+      "inlineEdit.updating": "Обновление: {label}...",
+      "inlineEdit.canceled": "Редактирование отменено.",
+      "inlineEdit.migrationNeeded": "Для встроенного редактирования полей времени и сложности нужна SQL-миграция.",
+      "inlineEdit.updateFailedMigration": "Ошибка обновления: выполните SQL-миграцию для полей времени и сложности.",
+      "inlineEdit.updateFailed": "Ошибка обновления: {error}",
+
+      "status.recipeAdded": "Рецепт добавлен",
+      "status.recipeSaved": "Рецепт сохранён",
+      "status.recipeDeleted": "Рецепт удалён",
+      "status.recipeUpdated": "Рецепт обновлён",
+      "status.signedIn": "Вход выполнен",
+      "status.signedOut": "Выход выполнен",
+      "status.signUpSuccess": "Аккаунт создан. Проверьте почту для подтверждения.",
+      "status.signedInAs": "Вы вошли как {email}",
+      "status.importPromptReset": "Промпт импорта сброшен.",
+      "status.copied": "Список покупок скопирован.",
+      "status.copyFailed": "Не удалось скопировать.",
+      "status.shoppingCleared": "Список покупок очищен.",
+      "status.plannerCleared": "Планировщик недели очищен.",
+      "status.signedOutPrompt": "Войдите в аккаунт или создайте новый.",
+      "status.confirmDelete": "Удалить этот рецепт?",
+      "status.passwordMismatch": "Пароли не совпадают.",
+      "status.passwordTooShort": "Пароль должен содержать не менее 8 символов.",
+      "status.emailRequired": "Введите эл. почту.",
+      "status.fillRequired": "Пожалуйста, заполните обязательные поля.",
+      "status.recipeNotFound": "Рецепт не найден.",
+      "status.importing": "Импорт рецепта...",
+      "status.importFailed": "Не удалось импортировать рецепт: {error}",
+      "status.imported": "Рецепт импортирован. Проверьте и сохраните.",
+      "status.saveFailed": "Ошибка сохранения: {error}",
+      "status.deleteFailed": "Ошибка удаления: {error}",
+      "status.loadFailed": "Не удалось загрузить рецепты: {error}",
+      "status.invalidUrl": "Введите корректный URL.",
+      "status.signInFailed": "Ошибка входа: {error}",
+      "status.signUpFailed": "Ошибка регистрации: {error}",
+      "status.signOutFailed": "Ошибка выхода: {error}",
+      "status.themeMissing": "Таблица настроек темы отсутствует. Выполните SQL для сохранения темы.",
+      "status.themeLocalOnly": "Тема сохранена локально. Выполните SQL для синхронизации с Supabase.",
+      "status.languageMissing": "Настройки языка не подключены. Добавьте столбец `language` в user_preferences.",
+      "status.languageLocalOnly": "Язык сохранён локально. Добавьте столбец `language` в user_preferences.",
+      "status.languageSaveFailed": "Не удалось сохранить язык: {error}",
+      "status.editingPrompt": "Редактирование рецепта. Измените поля и нажмите «Обновить».",
+      "status.draftRestored": "Черновик восстановлен. Продолжите редактирование или отмените.",
+      "status.fillTIM": "Заполните название, ингредиенты и способ приготовления.",
+      "status.signInToAdd": "Войдите, чтобы добавлять рецепты.",
+      "status.signInToUpdate": "Войдите, чтобы обновлять рецепты.",
+      "status.signInToDelete": "Войдите, чтобы удалять рецепты.",
+      "status.fetchingImage": "Загрузка изображения по ссылке...",
+      "status.imageFetchFailed": "Не удалось загрузить изображение: {error}",
+      "status.imageUploadFailed": "Ошибка загрузки изображения: {error}",
+      "status.saving": "Сохранение рецепта...",
+      "status.updating": "Обновление рецепта...",
+      "status.updateFailed": "Ошибка обновления: {error}",
+      "status.recipeAddedToShopping": "Рецепт добавлен в список покупок.",
+      "status.copiedClipboard": "Список покупок скопирован в буфер!",
+      "status.importedFrom": "Рецепт импортирован с {source}. Проверьте и сохраните.",
+      "status.editCanceled": "Редактирование отменено.",
+      "status.addCanceled": "Добавление рецепта отменено.",
+      "status.imageUndone": "Изменение изображения отменено.",
+      "status.invalidImageUrl": "Введите корректный URL изображения (http/https).",
+      "status.invalidImportUrl": "Введите корректный URL рецепта (http/https) для импорта.",
+      "status.signedInShort": "Вход выполнен.",
+      "status.confirmEmail": "Письмо с подтверждением отправлено! Проверьте почту.",
+      "status.couldNotResend": "Не удалось отправить повторно: {error}",
+      "status.pickRecipeFirst": "Сначала выберите рецепт.",
+      "status.recipeDuplicated": "Рецепт дублирован. Отредактируйте и сохраните как новый.",
+      "status.fillAllRequired": "Пожалуйста, заполните все обязательные поля.",
+      "status.passwordsDoNotMatch": "Пароли не совпадают.",
+      "status.passwordReq": "Пароль должен содержать: {errors}.",
+      "status.signUpEnterCreds": "Введите эл. почту и пароль для регистрации.",
+      "status.sharingRequiresAuth": "Для общего доступа требуется Supabase и вход.",
+      "status.shareLinkCopied": "Ссылка скопирована в буфер!",
+      "status.shareDisabled": "Общий доступ к рецепту отключён.",
+      "status.couldNotShare": "Не удалось переключить общий доступ.",
+      "status.sharingDbMissing": "Для общего доступа нужны столбцы в БД. Выполните SQL-миграцию.",
+      "status.couldNotEdit": "Не удалось найти рецепт для редактирования. Обновите страницу.",
+      "status.uiMismatch": "Обнаружено несоответствие UI. Перезагрузите страницу.",
+      "status.editingRecipe": "Редактирование рецепта. Измените поля и нажмите «Обновить».",
+      "status.noRecipesForAccount": "Для этого аккаунта рецепты не найдены.",
+      "status.dbMissingUserId": "В БД отсутствует recipes.user_id. Выполните SQL-миграцию безопасности.",
+      "validation.hoursMax": "{label}: часов не может быть больше 10.",
+      "validation.minutesMax": "{label}: минут не может быть больше 60.",
+      "validation.timeRequired": "{label}: введите значение больше 0.",
+      "validation.servesWhole": "Порций: используйте только целые числа.",
+      "validation.servesRange": "Порций: введите целое число от 1 до 15."
+    }
+  };
+
+  function createI18n({ defaultLocale = "en" } = {}) {
+    let currentLocale = defaultLocale in DICTIONARIES ? defaultLocale : "en";
+    const listeners = new Set();
+
+    function getLocale() {
+      return currentLocale;
+    }
+
+    function interpolate(template, params) {
+      if (!params) return template;
+      return String(template).replace(/\{(\w+)\}/g, (_, key) =>
+        key in params ? String(params[key]) : `{${key}}`
+      );
+    }
+
+    function t(key, params) {
+      const dict = DICTIONARIES[currentLocale] || DICTIONARIES.en;
+      const fallback = DICTIONARIES.en;
+      const value = dict[key] != null ? dict[key] : fallback[key] != null ? fallback[key] : key;
+      return interpolate(value, params);
+    }
+
+    function setLocale(code) {
+      const next = String(code || "").toLowerCase();
+      if (!(next in DICTIONARIES)) return;
+      if (next === currentLocale) return;
+      currentLocale = next;
+      listeners.forEach((fn) => {
+        try {
+          fn(currentLocale);
+        } catch (_err) {
+          /* noop */
+        }
+      });
+    }
+
+    function onChange(fn) {
+      if (typeof fn !== "function") return () => {};
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    }
+
+    function applyToDom(root) {
+      const scope = root && typeof root.querySelectorAll === "function" ? root : document;
+      scope.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        if (key) el.textContent = t(key);
+      });
+      scope.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-placeholder");
+        if (key) el.setAttribute("placeholder", t(key));
+      });
+      scope.querySelectorAll("[data-i18n-aria-label]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-aria-label");
+        if (key) el.setAttribute("aria-label", t(key));
+      });
+      scope.querySelectorAll("[data-i18n-title]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-title");
+        if (key) el.setAttribute("title", t(key));
+      });
+      scope.querySelectorAll("[data-i18n-value]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-value");
+        if (key) el.setAttribute("value", t(key));
+      });
+    }
+
+    function formatCategory(value) {
+      if (!value) return "";
+      const key = `category.${String(value).toLowerCase()}`;
+      const dict = DICTIONARIES[currentLocale] || DICTIONARIES.en;
+      if (dict[key] != null) return dict[key];
+      // Fallback: capitalize raw value
+      const v = String(value);
+      return v.charAt(0).toUpperCase() + v.slice(1);
+    }
+
+    function getDifficultyLabel(score) {
+      const n = Number(score);
+      if (!Number.isFinite(n)) return t("difficulty.easy");
+      if (n <= 2) return t("difficulty.veryEasy");
+      if (n <= 4) return t("difficulty.easy");
+      if (n <= 6) return t("difficulty.medium");
+      if (n <= 8) return t("difficulty.hard");
+      if (n <= 9) return t("difficulty.veryHard");
+      return t("difficulty.expert");
+    }
+
+    return {
+      t,
+      setLocale,
+      getLocale,
+      onChange,
+      applyToDom,
+      formatCategory,
+      getDifficultyLabel,
+      DICTIONARIES
+    };
+  }
+
+  window.StorecipeI18n = { createI18n };
+})();

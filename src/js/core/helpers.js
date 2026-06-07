@@ -157,9 +157,14 @@ function parseDurationText(value) {
   };
 }
 
-function parseTimePair(hoursRaw, minutesRaw, label) {
+function parseTimePair(hoursRaw, minutesRaw, label, messages) {
   const hoursText = sanitizeDigits(hoursRaw);
   const minutesText = sanitizeDigits(minutesRaw);
+  const msgs = messages || {};
+  const hoursMaxTpl = msgs.hoursMax || "{label}: hours cannot be more than 10.";
+  const minutesMaxTpl = msgs.minutesMax || "{label}: minutes cannot be more than 60.";
+  const requiredTpl = msgs.required || "{label}: enter a valid value greater than 0.";
+  const fmt = (tpl) => String(tpl).replace("{label}", label);
 
   if (!hoursText && !minutesText) {
     return {
@@ -174,11 +179,11 @@ function parseTimePair(hoursRaw, minutesRaw, label) {
 
   const hours = Number(hoursText || 0);
   const minutes = Number(minutesText || 0);
-  const hoursError = hours > 10 ? `${label}: hours cannot be more than 10.` : "";
-  const minutesError = minutes > 60 ? `${label}: minutes cannot be more than 60.` : "";
+  const hoursError = hours > 10 ? fmt(hoursMaxTpl) : "";
+  const minutesError = minutes > 60 ? fmt(minutesMaxTpl) : "";
   const pairError =
     !hoursError && !minutesError && hours === 0 && minutes === 0
-      ? `${label}: enter a valid value greater than 0.`
+      ? fmt(requiredTpl)
       : "";
   const message = hoursError || minutesError || pairError;
 
@@ -192,18 +197,21 @@ function parseTimePair(hoursRaw, minutesRaw, label) {
   };
 }
 
-function validateServesValue(rawValue) {
+function validateServesValue(rawValue, messages) {
+  const msgs = messages || {};
+  const wholeNumbersMsg = msgs.wholeNumbers || "Serves: use whole numbers only.";
+  const rangeMsg = msgs.range || "Serves: enter a whole number from 1 to 15.";
   const value = String(rawValue ?? "").trim();
   if (!value) {
     return { message: "", value: null };
   }
   if (!/^\d+$/.test(value)) {
-    return { message: "Serves: use whole numbers only.", value: null };
+    return { message: wholeNumbersMsg, value: null };
   }
 
   const numeric = Number(value);
   if (!Number.isInteger(numeric) || numeric < 1 || numeric > 15) {
-    return { message: "Serves: enter a whole number from 1 to 15.", value: null };
+    return { message: rangeMsg, value: null };
   }
 
   return { message: "", value: String(numeric) };
