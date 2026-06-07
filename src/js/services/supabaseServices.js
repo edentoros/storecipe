@@ -114,6 +114,60 @@ function createSupabaseServices({ config, state, helpers }) {
     return Array.isArray(data) ? data : [];
   }
 
+  async function fetchLanguagePreferenceViaRest(userId) {
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({
+      select: "language",
+      user_id: `eq.${userId}`,
+      limit: "1"
+    });
+    const response = await debugFetch(`${SUPABASE_URL}/rest/v1/${THEME_PREFERENCES_TABLE}?${query.toString()}`, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message =
+        typeof data === "object" && data && "message" in data
+          ? data.message
+          : `Language fetch failed with status ${response.status}`;
+      throw new Error(message);
+    }
+
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function upsertLanguagePreferenceViaRest(userId, language) {
+    const accessToken = getAccessToken();
+    const l = String(language).toLowerCase();
+    const normalizedLanguage = l === "ru" ? "ru" : "en";
+    const response = await debugFetch(`${SUPABASE_URL}/rest/v1/${THEME_PREFERENCES_TABLE}?on_conflict=user_id`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=representation"
+      },
+      body: JSON.stringify([{ user_id: userId, language: normalizedLanguage }])
+    });
+
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message =
+        typeof data === "object" && data && "message" in data
+          ? data.message
+          : `Language upsert failed with status ${response.status}`;
+      throw new Error(message);
+    }
+
+    return Array.isArray(data) ? data : [];
+  }
+
   async function insertRecipeViaRest(payload) {
     const accessToken = getAccessToken();
     const response = await debugFetch(`${SUPABASE_URL}/rest/v1/recipes`, {
@@ -430,6 +484,8 @@ function createSupabaseServices({ config, state, helpers }) {
     debugFetch,
     fetchThemePreferenceViaRest,
     upsertThemePreferenceViaRest,
+    fetchLanguagePreferenceViaRest,
+    upsertLanguagePreferenceViaRest,
     insertRecipeViaRest,
     updateRecipeViaRest,
     fetchRecipesViaRest,

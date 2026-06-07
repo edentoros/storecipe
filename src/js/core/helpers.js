@@ -33,6 +33,12 @@ function normalizeTheme(value) {
   return "light";
 }
 
+function normalizeLanguage(value) {
+  const v = String(value || "").toLowerCase();
+  if (v === "ru") return "ru";
+  return "en";
+}
+
 async function withTimeout(promise, ms, label) {
   let timeoutId;
   const timeoutPromise = new Promise((_, reject) => {
@@ -249,6 +255,7 @@ window.StorecipeHelpers = {
   normalizeDifficulty,
   getDifficultyLabel,
   normalizeTheme,
+  normalizeLanguage,
   withTimeout,
   getDirectImageUrl,
   isValidHttpUrl,

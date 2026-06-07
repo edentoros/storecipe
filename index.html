@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Personal Recipe App</title>
-    <link rel="stylesheet" href="dist/style.css?v=20260428b" />
+    <link rel="stylesheet" href="dist/style.css?v=20260607a" />
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
@@ -84,6 +84,34 @@
           <div class="auth-actions">
             <button id="signInButton" class="button" type="submit">Sign In</button>
             <button id="signUpButton" class="button button--secondary" type="button">Sign Up</button>
+            <div id="languageSelector" class="language-selector hidden">
+              <button
+                id="languageToggleButton"
+                class="button button--ghost language-toggle-button"
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-controls="languageMenu"
+              >
+                <span class="language-toggle-button__flag" aria-hidden="true">&#127468;&#127463;</span>
+                <span class="language-toggle-button__label">Language</span>
+                <span class="language-toggle-button__caret" aria-hidden="true">&#9662;</span>
+              </button>
+              <ul id="languageMenu" class="language-menu hidden" role="listbox" aria-label="Choose language">
+                <li role="option" data-lang="en" aria-selected="true">
+                  <button class="language-option" type="button" data-lang="en">
+                    <span class="language-option__flag" aria-hidden="true">&#127468;&#127463;</span>
+                    <span class="language-option__label">English</span>
+                  </button>
+                </li>
+                <li role="option" data-lang="ru" aria-selected="false">
+                  <button class="language-option" type="button" data-lang="ru">
+                    <span class="language-option__flag" aria-hidden="true">&#127479;&#127482;</span>
+                    <span class="language-option__label">Русский</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
             <button id="themeToggleButton" class="button button--ghost theme-toggle-button hidden" type="button">
               Dark theme: Off
             </button>
@@ -376,12 +404,13 @@
     <script defer src="src/js/features/settingsManager.js"></script>
     <script defer src="src/js/features/authUiManager.js"></script>
     <script defer src="src/js/features/themeManager.js"></script>
+    <script defer src="src/js/features/languageManager.js"></script>
     <script defer src="src/js/features/viewManager.js"></script>
     <script defer src="src/js/features/inlineEditManager.js"></script>
     <script defer src="src/js/features/importPromptManager.js"></script>
     <script defer src="src/js/features/recipeMetaManager.js"></script>
     <script defer src="src/js/features/recipeRenderer.js"></script>
     <script defer src="src/js/services/supabaseServices.js"></script>
-    <script defer src="app.js?v=20260428b"></script>
+    <script defer src="app.js?v=20260607a"></script>
   </body>
 </html>

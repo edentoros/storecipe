@@ -10,6 +10,7 @@
       signUpButton,
       signOutButton,
       themeToggleButton,
+      languageSelector,
       signedInEmail,
       authEmailLabel,
       authPasswordLabel,
@@ -186,6 +187,9 @@
       }
       if (themeToggleButton) {
         themeToggleButton.classList.remove("hidden");
+      }
+      if (languageSelector) {
+        languageSelector.classList.remove("hidden");
       }
       if (authStatusEl) {
         authStatusEl.classList.toggle("hidden", isSignedIn);

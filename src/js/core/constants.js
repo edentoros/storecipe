@@ -12,6 +12,12 @@ const THEME_PREFERENCES_TABLE = "user_preferences";
 const DEFAULT_THEME = "light";
 const DEFAULT_DIFFICULTY = 4;
 const THEME_LOCAL_KEY_PREFIX = "storecipe_theme_";
+const DEFAULT_LANGUAGE = "en";
+const LANGUAGE_LOCAL_KEY_PREFIX = "storecipe_language_";
+const SUPPORTED_LANGUAGES = [
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" }
+];
 const IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 const IMAGE_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
 const RECIPE_IMPORT_FUNCTION = "recipe-import";
@@ -53,6 +59,9 @@ window.StorecipeConstants = {
   DEFAULT_THEME,
   DEFAULT_DIFFICULTY,
   THEME_LOCAL_KEY_PREFIX,
+  DEFAULT_LANGUAGE,
+  LANGUAGE_LOCAL_KEY_PREFIX,
+  SUPPORTED_LANGUAGES,
   IMAGE_MAX_SIZE_BYTES,
   IMAGE_ALLOWED_TYPES,
   RECIPE_IMPORT_FUNCTION,

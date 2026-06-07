@@ -13,6 +13,9 @@
     DEFAULT_THEME,
     DEFAULT_DIFFICULTY,
     THEME_LOCAL_KEY_PREFIX,
+    DEFAULT_LANGUAGE,
+    LANGUAGE_LOCAL_KEY_PREFIX,
+    SUPPORTED_LANGUAGES,
     IMAGE_MAX_SIZE_BYTES,
     IMAGE_ALLOWED_TYPES,
     RECIPE_IMPORT_FUNCTION,
@@ -28,6 +31,7 @@
     normalizeDifficulty: normalizeDifficultyCore,
     getDifficultyLabel,
     normalizeTheme,
+    normalizeLanguage,
     withTimeout,
     getDirectImageUrl,
     isValidHttpUrl,
@@ -54,6 +58,7 @@
   const { createSettingsManager } = window.StorecipeSettingsManager;
   const { createAuthUiManager } = window.StorecipeAuthUiManager;
   const { createThemeManager } = window.StorecipeThemeManager;
+  const { createLanguageManager } = window.StorecipeLanguageManager;
   const { createViewManager } = window.StorecipeViewManager;
   const { createInlineEditManager } = window.StorecipeInlineEditManager;
 
@@ -75,6 +80,9 @@
     signInButton,
     signUpButton,
     themeToggleButton,
+    languageSelector,
+    languageToggleButton,
+    languageMenu,
     signedInEmail,
     signOutButton,
     authConfirmPassword,
@@ -143,7 +151,7 @@
     addButtonWideQuery
   } = getDomRefs();
 
-  const state = createAppState({ DEFAULT_THEME });
+  const state = createAppState({ DEFAULT_THEME, DEFAULT_LANGUAGE });
 
   function setStartupLoading(isLoading) {
     state.isStartupLoading = Boolean(isLoading);
@@ -190,6 +198,8 @@
     client,
     fetchThemePreferenceViaRest,
     upsertThemePreferenceViaRest,
+    fetchLanguagePreferenceViaRest,
+    upsertLanguagePreferenceViaRest,
     insertRecipeViaRest,
     updateRecipeViaRest,
     fetchRecipesViaRest,
@@ -319,7 +329,7 @@
   const authUiManager = createAuthUiManager({
     dom: {
       authStatus, authLoading, authLoadingText, authEmail, authPassword,
-      signInButton, signUpButton, signOutButton, themeToggleButton, signedInEmail,
+      signInButton, signUpButton, signOutButton, themeToggleButton, languageSelector, signedInEmail,
       authEmailLabel, authPasswordLabel, authPanel, settingsButton, openShoppingList, openMealPlanner, closeSettingsButton,
       settingsBackdrop, recipeListLoading, recipeList, appStatus, toastContainer
     },
@@ -351,6 +361,29 @@
   const setTheme = themeManager.setTheme;
   const loadThemePreference = themeManager.loadThemePreference;
   const saveThemePreference = themeManager.saveThemePreference;
+
+  const languageManager = createLanguageManager({
+    dom: { languageSelector, languageToggleButton, languageMenu },
+    state,
+    config: {
+      DEFAULT_LANGUAGE,
+      LANGUAGE_LOCAL_KEY_PREFIX,
+      THEME_PREFERENCES_TABLE,
+      SUPPORTED_LANGUAGES
+    },
+    helpers: { normalizeLanguage },
+    supabaseServices: {
+      hasSupabaseConfig,
+      fetchLanguagePreferenceViaRest,
+      upsertLanguagePreferenceViaRest
+    },
+    setAppStatus
+  });
+  const updateLanguageButtonUi = languageManager.updateLanguageButtonUi;
+  const setLanguage = languageManager.setLanguage;
+  const setLanguageMenuOpen = languageManager.setLanguageMenuOpen;
+  const loadLanguagePreference = languageManager.loadLanguagePreference;
+  const saveLanguagePreference = languageManager.saveLanguagePreference;
 
   const imageManager = createImageManager({
     dom: { editImageTools, editImagePreview, editImageEmpty, imageUrlInput, clearImageButton, undoImageButton },
@@ -1359,6 +1392,47 @@
     });
   }
 
+  if (languageToggleButton) {
+    languageToggleButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setLanguageMenuOpen(!state.isLanguageMenuOpen);
+    });
+  }
+
+  if (languageMenu) {
+    languageMenu.addEventListener("click", async (event) => {
+      const target = event.target instanceof Element ? event.target.closest("[data-lang]") : null;
+      if (!(target instanceof HTMLElement)) return;
+      const nextLanguage = target.dataset.lang || "en";
+      if (nextLanguage === state.currentLanguage) {
+        setLanguageMenuOpen(false);
+        return;
+      }
+      setLanguage(nextLanguage);
+      setLanguageMenuOpen(false);
+      if (state.currentUser) {
+        if (languageToggleButton) languageToggleButton.disabled = true;
+        await saveLanguagePreference(nextLanguage);
+        if (languageToggleButton) languageToggleButton.disabled = false;
+        updateLanguageButtonUi();
+      }
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!state.isLanguageMenuOpen) return;
+    const target = event.target instanceof Node ? event.target : null;
+    if (languageSelector && target && languageSelector.contains(target)) return;
+    setLanguageMenuOpen(false);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.isLanguageMenuOpen) {
+      setLanguageMenuOpen(false);
+      languageToggleButton?.focus();
+    }
+  });
+
   if (settingsButton && authPanel) {
     settingsButton.addEventListener("click", () => {
       if (!state.currentUser) return;
@@ -2331,12 +2405,14 @@
         state.isSettingsOpen = false;
         resetRecipeFormState();
         setTheme(DEFAULT_THEME, { persistForCurrentUser: false });
+        setLanguage(DEFAULT_LANGUAGE, { persistForCurrentUser: false });
         mealPlannerWeekOffset = 0;
         state.shoppingListRecipeIds = [];
       }
       loadImportPrompt();
     } else if (justSignedIn || switchedUser || authEvent === "USER_UPDATED" || authEvent === "INITIAL_SESSION") {
       await loadThemePreference();
+      await loadLanguagePreference();
       loadImportPrompt();
     }
 
@@ -2393,6 +2469,7 @@
         getRecipeMetaFromFormData(new FormData(recipeForm), { showStatus: false });
       }
       await loadThemePreference();
+      await loadLanguagePreference();
       loadImportPrompt();
       updateImportButtonUi();
 
