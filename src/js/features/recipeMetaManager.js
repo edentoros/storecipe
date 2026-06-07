@@ -15,9 +15,10 @@ function createRecipeMetaManager({
   helpers,
   i18n
 }) {
-  const { normalizeDifficulty, getDifficultyLabel: getDifficultyLabelHelper, parseTimePair, validateServesValue, formatDuration } = helpers;
+  const { normalizeDifficulty, getDifficultyLabel: getDifficultyLabelHelper, parseTimePair, validateServesValue, formatDuration: formatDurationHelper } = helpers;
   const t = i18n ? (k, p) => i18n.t(k, p) : (k) => k;
   const getDifficultyLabel = i18n && i18n.getDifficultyLabel ? (n) => i18n.getDifficultyLabel(n) : getDifficultyLabelHelper;
+  const formatDuration = i18n && i18n.formatDuration ? (m) => i18n.formatDuration(m) : formatDurationHelper;
   function getTimeMessages() {
     return {
       hoursMax: t("validation.hoursMax"),

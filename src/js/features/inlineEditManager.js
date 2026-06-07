@@ -4,11 +4,12 @@
     const { DEFAULT_DIFFICULTY, hasSupabaseConfig } = config;
     const t = i18n ? (k, p) => i18n.t(k, p) : (k) => k;
     const {
-      parseDurationText, formatDuration, sanitizeDigits, parseTimePair,
+      parseDurationText, formatDuration: formatDurationHelper, sanitizeDigits, parseTimePair,
       normalizeOptionalText, getDirectImageUrl, normalizeDifficulty
     } = helpers;
     const { updateRecipeViaRest } = supabaseServices;
     const { setAppStatus, logSupabaseError, showDetail, renderList, saveLocalRecipes, isMissingRecipeMetaColumns } = callbacks;
+    const formatDuration = i18n && i18n.formatDuration ? (m) => i18n.formatDuration(m) : formatDurationHelper;
 
     function normalizeInlineEditableField(field) {
       const normalized = String(field || "").trim().toLowerCase();

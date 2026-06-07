@@ -25,6 +25,7 @@ function createRecipeRenderer({
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
   };
   const tDifficulty = i18n && i18n.getDifficultyLabel ? (n) => i18n.getDifficultyLabel(n) : (helpers.getDifficultyLabel || ((n) => String(n)));
+  const tFormatDuration = i18n && i18n.formatDuration ? (m) => i18n.formatDuration(m) : formatDuration;
 
   function patchRecipeCardImage(recipe) {
     if (!recipe?.id || !recipe?._resolvedImageUrl) return;
@@ -212,7 +213,7 @@ function createRecipeRenderer({
             Number(cookParsed.hours || 0) * 60 +
             Number(cookParsed.minutes || 0);
           const storedTotalTime = String(recipe.total_time ?? recipe.totalTime ?? "").trim();
-          const totalTimeValue = totalMinutes > 0 ? formatDuration(totalMinutes) : storedTotalTime;
+          const totalTimeValue = totalMinutes > 0 ? tFormatDuration(totalMinutes) : storedTotalTime;
           const servesValue = String(recipe.serves ?? recipe.servings ?? "").trim();
           const difficultyNum = normalizeDifficulty(recipe.difficulty, 4);
           const difficultyLevel = `${difficultyNum} — ${tDifficulty(difficultyNum)}`;
@@ -262,15 +263,24 @@ function createRecipeRenderer({
         const text = value == null ? "" : String(value).trim();
         return text ? escapeHtml(text) : "";
       };
-      const prepTime = recipe.prep_time ?? recipe.prepTime ?? "";
-      const cookingTime = recipe.cooking_time ?? recipe.cookingTime ?? "";
-      const prepParsed = parseDurationText(prepTime);
-      const cookParsed = parseDurationText(cookingTime);
+      const prepTimeRaw = recipe.prep_time ?? recipe.prepTime ?? "";
+      const cookingTimeRaw = recipe.cooking_time ?? recipe.cookingTime ?? "";
+      const prepParsed = parseDurationText(prepTimeRaw);
+      const cookParsed = parseDurationText(cookingTimeRaw);
       const prepMinutesTotal = Number(prepParsed.hours || 0) * 60 + Number(prepParsed.minutes || 0);
       const cookMinutesTotal = Number(cookParsed.hours || 0) * 60 + Number(cookParsed.minutes || 0);
+      // Reformat saved durations through i18n so old recipes (saved with English
+      // "1 hour 30 mins") display in the current language.
+      const prepTime = prepMinutesTotal > 0 ? tFormatDuration(prepMinutesTotal) : String(prepTimeRaw || "").trim();
+      const cookingTime = cookMinutesTotal > 0 ? tFormatDuration(cookMinutesTotal) : String(cookingTimeRaw || "").trim();
       const computedTotalTime =
-        prepMinutesTotal > 0 || cookMinutesTotal > 0 ? formatDuration(prepMinutesTotal + cookMinutesTotal) : "";
-      const totalTime = recipe.total_time ?? recipe.totalTime ?? computedTotalTime;
+        prepMinutesTotal > 0 || cookMinutesTotal > 0 ? tFormatDuration(prepMinutesTotal + cookMinutesTotal) : "";
+      const totalTimeRaw = recipe.total_time ?? recipe.totalTime ?? "";
+      const totalTimeParsed = parseDurationText(totalTimeRaw);
+      const totalTimeMin = Number(totalTimeParsed.hours || 0) * 60 + Number(totalTimeParsed.minutes || 0);
+      const totalTime = totalTimeMin > 0
+        ? tFormatDuration(totalTimeMin)
+        : (computedTotalTime || String(totalTimeRaw || "").trim());
       const serves = recipe.serves ?? recipe.servings ?? "";
       const difficultyNum = normalizeDifficulty(recipe.difficulty, 4);
       const difficulty = `${difficultyNum} — ${tDifficulty(difficultyNum)}`;
