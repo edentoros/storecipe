@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Storecipe</title>
-    <link rel="stylesheet" href="dist/style.css?v=20260608b" />
+    <link rel="stylesheet" href="dist/style.css?v=20260608c" />
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
@@ -432,6 +432,9 @@
           <button id="closeFriends" class="icon-button button--ghost" type="button" data-i18n-aria-label="friends.close" aria-label="Close friends">x</button>
         </div>
         <div class="modal__body">
+          <ul id="friendsList" class="friends-list"></ul>
+          <p id="friendsEmpty" class="empty friends-empty hidden" data-i18n="friends.empty">You haven't added any friends yet.</p>
+
           <div class="friends-invite-card">
             <p class="friends-invite-card__label" data-i18n="friends.myInviteCode">Your invite code</p>
             <div class="friends-invite-card__row">
@@ -451,9 +454,6 @@
               <button id="addFriendButton" class="button" type="button" data-i18n="friends.addButton">Add friend</button>
             </div>
           </section>
-
-          <ul id="friendsList" class="friends-list"></ul>
-          <p id="friendsEmpty" class="empty friends-empty hidden" data-i18n="friends.empty">You haven't added any friends yet.</p>
         </div>
       </div>
     </div>
@@ -495,6 +495,6 @@
     <script defer src="src/js/features/recipeRenderer.js"></script>
     <script defer src="src/js/features/friendsManager.js"></script>
     <script defer src="src/js/services/supabaseServices.js"></script>
-    <script defer src="app.js?v=20260608b"></script>
+    <script defer src="app.js?v=20260608c"></script>
   </body>
 </html>

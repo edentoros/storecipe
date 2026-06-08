@@ -323,7 +323,16 @@ body.theme-dark .sunset-info-text {
   background: #f0f4f8;
   border-radius: 10px;
   padding: 0.65rem 0.8rem;
-  margin-bottom: 0.85rem;
+  margin: 1rem 0 0.85rem;
+}
+.friends-list:not(:empty) + .friends-invite-card,
+.friends-empty + .friends-invite-card {
+  margin-top: 1rem;
+  border-top: 1px solid #e0e8f0;
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0;
+  padding-right: 0;
 }
 .friends-invite-card__label {
   margin: 0 0 0.35rem;
@@ -421,6 +430,13 @@ body.theme-dark .sunset-info-text {
   padding: 0.3rem 0.55rem;
   min-height: 30px;
 }
+.friend-row__remove:hover,
+.friend-row__remove:focus {
+  background: #fdecea;
+  color: #c0392b;
+  border-color: #f5c6cb;
+  outline: none;
+}
 .friends-empty {
   margin-top: 0.5rem;
   font-size: 0.9rem;
@@ -460,6 +476,17 @@ body.theme-dark .sunset-info-text {
   white-space: pre-wrap;
 }
 body.theme-dark .friends-invite-card { background: #1a3457; }
+body.theme-dark .friends-list:not(:empty) + .friends-invite-card,
+body.theme-dark .friends-empty + .friends-invite-card {
+  background: transparent;
+  border-top-color: #243b53;
+}
+body.theme-dark .friend-row__remove:hover,
+body.theme-dark .friend-row__remove:focus {
+  background: #4a1c1c;
+  color: #ffb4ab;
+  border-color: #80332e;
+}
 body.theme-dark .friends-invite-card__label { color: #9fb3c8; }
 body.theme-dark .friends-invite-card__code { color: #f0f4f8; }
 body.theme-dark .friends-add__tab {
