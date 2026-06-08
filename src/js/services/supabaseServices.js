@@ -200,9 +200,11 @@ function createSupabaseServices({ config, state, helpers }) {
 
   async function lookupProfileByEmailViaRest(email) {
     const accessToken = getAccessToken();
+    // Case-insensitive exact match: ilike with no wildcards = exact icase match.
+    const safe = String(email || "").trim().replace(/[%_]/g, "");
     const query = new URLSearchParams({
       select: "id,email,invite_code,display_name",
-      email: `eq.${String(email || "").trim().toLowerCase()}`,
+      email: `ilike.${safe}`,
       limit: "1"
     });
     const response = await debugFetch(
@@ -215,6 +217,26 @@ function createSupabaseServices({ config, state, helpers }) {
       throw new Error(message);
     }
     return Array.isArray(data) ? data[0] || null : null;
+  }
+
+  async function fetchProfilesByIdsViaRest(ids) {
+    const cleanIds = (Array.isArray(ids) ? ids : []).filter(Boolean);
+    if (!cleanIds.length) return [];
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({
+      select: "id,email,invite_code,display_name",
+      id: `in.(${cleanIds.join(",")})`
+    });
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/${getProfilesTable()}?${query.toString()}`,
+      { method: "GET", headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Profile bulk fetch failed ${response.status}`;
+      throw new Error(message);
+    }
+    return Array.isArray(data) ? data : [];
   }
 
   async function lookupProfileByInviteCodeViaRest(code) {
@@ -237,10 +259,11 @@ function createSupabaseServices({ config, state, helpers }) {
   }
 
   async function fetchFriendshipsViaRest(userId) {
-    // Friendships where I am the follower, with the followee profile joined.
+    // Two-step query: friendships where I am the follower, then the followee profiles.
+    // Done in JS to avoid PostgREST FK-embed quirks across auth.users.
     const accessToken = getAccessToken();
     const query = new URLSearchParams({
-      select: "id,followee_id,is_muted,created_at,profile:followee_id(id,email,invite_code,display_name)",
+      select: "id,followee_id,is_muted,created_at",
       follower_id: `eq.${userId}`,
       order: "created_at.desc"
     });
@@ -253,7 +276,19 @@ function createSupabaseServices({ config, state, helpers }) {
       const message = typeof data === "object" && data && "message" in data ? data.message : `Friends fetch failed ${response.status}`;
       throw new Error(message);
     }
-    return Array.isArray(data) ? data : [];
+    const rows = Array.isArray(data) ? data : [];
+    if (!rows.length) return [];
+
+    const followeeIds = rows.map((r) => r.followee_id).filter(Boolean);
+    let profiles = [];
+    try {
+      profiles = await fetchProfilesByIdsViaRest(followeeIds);
+    } catch (_err) {
+      // If profiles fetch fails, return rows without profile embed; UI will fall
+      // back to invite_code/email fields being undefined and show "(no name)".
+    }
+    const profileById = new Map(profiles.map((p) => [p.id, p]));
+    return rows.map((r) => ({ ...r, profile: profileById.get(r.followee_id) || null }));
   }
 
   async function addFriendshipViaRest(followerId, followeeId) {
