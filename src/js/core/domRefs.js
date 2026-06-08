@@ -88,6 +88,21 @@ function getDomRefs() {
     mealPlannerWeekLabel: document.getElementById("mealPlannerWeekLabel"),
     mealPlannerGrid: document.getElementById("mealPlannerGrid"),
     clearMealPlanner: document.getElementById("clearMealPlanner"),
+    openFriends: document.getElementById("openFriends"),
+    friendsModal: document.getElementById("friendsModal"),
+    closeFriends: document.getElementById("closeFriends"),
+    myInviteCode: document.getElementById("myInviteCode"),
+    copyInviteCode: document.getElementById("copyInviteCode"),
+    addFriendTabCode: document.getElementById("addFriendTabCode"),
+    addFriendTabEmail: document.getElementById("addFriendTabEmail"),
+    addFriendInput: document.getElementById("addFriendInput"),
+    addFriendButton: document.getElementById("addFriendButton"),
+    friendsList: document.getElementById("friendsList"),
+    friendsEmpty: document.getElementById("friendsEmpty"),
+    toggleFriendsFeed: document.getElementById("toggleFriendsFeed"),
+    recipeListHeading: document.getElementById("recipeListHeading"),
+    shareWithFriendsRow: document.getElementById("shareWithFriendsRow"),
+    shareWithFriendsInput: document.getElementById("shareWithFriendsInput"),
     addButtonWideQuery: window.matchMedia("(min-width: 768px)")
   };
 }

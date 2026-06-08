@@ -10,6 +10,8 @@
     BUCKET,
     LOCAL_RECIPES_KEY,
     THEME_PREFERENCES_TABLE,
+    PROFILES_TABLE,
+    FRIENDSHIPS_TABLE,
     DEFAULT_THEME,
     DEFAULT_DIFFICULTY,
     THEME_LOCAL_KEY_PREFIX,
@@ -60,6 +62,7 @@
   const { createAuthUiManager } = window.StorecipeAuthUiManager;
   const { createThemeManager } = window.StorecipeThemeManager;
   const { createLanguageManager } = window.StorecipeLanguageManager;
+  const { createFriendsManager } = window.StorecipeFriendsManager;
   const { createViewManager } = window.StorecipeViewManager;
   const { createInlineEditManager } = window.StorecipeInlineEditManager;
 
@@ -151,6 +154,21 @@
     mealPlannerWeekLabel,
     mealPlannerGrid,
     clearMealPlanner,
+    openFriends,
+    friendsModal,
+    closeFriends,
+    myInviteCode,
+    copyInviteCode,
+    addFriendTabCode,
+    addFriendTabEmail,
+    addFriendInput,
+    addFriendButton,
+    friendsList,
+    friendsEmpty,
+    toggleFriendsFeed,
+    recipeListHeading,
+    shareWithFriendsRow,
+    shareWithFriendsInput,
     addButtonWideQuery
   } = getDomRefs();
 
@@ -188,6 +206,8 @@
       IMAGE_SIGN_TIMEOUT_MS,
       BUCKET,
       THEME_PREFERENCES_TABLE,
+      PROFILES_TABLE,
+      FRIENDSHIPS_TABLE,
       RECIPE_IMPORT_FUNCTION
     },
     state: {
@@ -209,6 +229,14 @@
     upsertThemePreferenceViaRest,
     fetchLanguagePreferenceViaRest,
     upsertLanguagePreferenceViaRest,
+    fetchMyProfileViaRest,
+    lookupProfileByEmailViaRest,
+    lookupProfileByInviteCodeViaRest,
+    fetchFriendshipsViaRest,
+    addFriendshipViaRest,
+    setFriendshipMutedViaRest,
+    deleteFriendshipViaRest,
+    fetchFriendRecipesViaRest,
     insertRecipeViaRest,
     updateRecipeViaRest,
     fetchRecipesViaRest,
@@ -395,8 +423,9 @@
       try { renderShoppingList(); } catch (_e) {}
       try { renderMealPlanner(); } catch (_e) {}
       const openId = new URLSearchParams(window.location.search).get("recipe");
-      if (openId && Array.isArray(state.recipes)) {
-        const openRecipe = state.recipes.find((item) => String(item.id) === String(openId));
+      if (openId) {
+        const pool = state.isFriendsFeedActive ? (state.friendRecipes || []) : state.recipes;
+        const openRecipe = Array.isArray(pool) ? pool.find((item) => String(item.id) === String(openId)) : null;
         if (openRecipe) {
           try { showDetail(openRecipe, { scrollToDetail: false }); } catch (_e) {}
         }
@@ -486,6 +515,9 @@
       difficultyInput.value = String(normalizeDifficulty(recipe.difficulty));
       syncDifficultyUi();
     }
+    if (shareWithFriendsInput) {
+      shareWithFriendsInput.checked = Boolean(recipe.is_shared_with_friends);
+    }
     recipeForm.elements.image.value = "";
     if (imageUrlInput) {
       imageUrlInput.value = "";
@@ -501,6 +533,7 @@
     recipeForm.reset();
     syncDifficultyUi();
     recipeMetaManager.resetValidationUi();
+    if (shareWithFriendsInput) shareWithFriendsInput.checked = false;
     setRecipeFormMode(null);
     hideEditImageTools();
     clearDraft();
@@ -670,11 +703,41 @@
   const setAddRecipeOpen = viewManager.setAddRecipeOpen;
   const setDetailOpen = viewManager.setDetailOpen;
 
+  const friendsManager = createFriendsManager({
+    dom: {
+      friendsModal, openFriends, closeFriends, myInviteCode, copyInviteCode,
+      addFriendTabCode, addFriendTabEmail, addFriendInput, addFriendButton,
+      friendsList, friendsEmpty, toggleFriendsFeed, recipeListHeading,
+      shareWithFriendsRow, shareWithFriendsInput
+    },
+    state,
+    helpers: { escapeHtml },
+    supabaseServices: {
+      hasSupabaseConfig,
+      fetchMyProfileViaRest,
+      lookupProfileByEmailViaRest,
+      lookupProfileByInviteCodeViaRest,
+      fetchFriendshipsViaRest,
+      addFriendshipViaRest,
+      setFriendshipMutedViaRest,
+      deleteFriendshipViaRest,
+      fetchFriendRecipesViaRest
+    },
+    setAppStatus,
+    logSupabaseError,
+    i18n
+  });
+  friendsManager.attachListeners();
+  friendsManager.setAddMode("code");
+
   const recipeRenderer = createRecipeRenderer({
     dom: { recipeList, detailContent, recipeDetail },
     state: {
       get recipes() {
-        return state.recipes;
+        // When the friends feed is on, the list shows friend-owned shared recipes.
+        // The current recipe's user_id is checked downstream to render read-only
+        // actions for non-owned cards in the detail view.
+        return state.isFriendsFeedActive ? (state.friendRecipes || []) : state.recipes;
       },
       get currentUser() {
         return state.currentUser;
@@ -861,6 +924,9 @@
       image_url: imagePath,
       user_id: state.currentUser.id
     };
+    if (state.isFriendsAvailable && shareWithFriendsInput) {
+      basePayload.is_shared_with_friends = Boolean(shareWithFriendsInput.checked);
+    }
     const catFavFields = state.hasCategoryFavColumns ? { category, is_favourite: false } : {};
     const payload = state.hasRecipeMetaColumns ? { ...basePayload, ...recipeMeta, ...catFavFields } : { ...basePayload, ...catFavFields };
 
@@ -1014,6 +1080,9 @@
       image_url: nextImagePath,
       updated_at: new Date().toISOString()
     };
+    if (state.isFriendsAvailable && shareWithFriendsInput) {
+      basePayload.is_shared_with_friends = Boolean(shareWithFriendsInput.checked);
+    }
     const catFavFields = state.hasCategoryFavColumns ? { category } : {};
     const payload = state.hasRecipeMetaColumns ? { ...basePayload, ...recipeMeta, ...catFavFields } : { ...basePayload, ...catFavFields };
 
@@ -1853,6 +1922,99 @@
     showDetail(recipe, { scrollToDetail: false });
   }
 
+  /* ─── Friends feed + save-from-friend ─── */
+
+  async function saveFriendRecipeToMine(recipeId) {
+    if (!state.currentUser) {
+      setAppStatus(t("status.signInToAdd"));
+      return;
+    }
+    // Source: prefer state.friendRecipes (when feed active), else search state.recipes.
+    const source = (state.friendRecipes || []).find((r) => String(r.id) === String(recipeId))
+      || (state.recipes || []).find((r) => String(r.id) === String(recipeId));
+    if (!source) {
+      setAppStatus(t("status.recipeNotFound"));
+      return;
+    }
+
+    const payload = {
+      title: source.title || "",
+      description: source.description || null,
+      ingredients: source.ingredients || "",
+      method: source.method || "",
+      notes: source.notes || null,
+      image_url: source.image_url || null,
+      user_id: state.currentUser.id,
+      is_shared_with_friends: false
+    };
+    if (state.hasRecipeMetaColumns) {
+      payload.prep_time = source.prep_time ?? source.prepTime ?? null;
+      payload.cooking_time = source.cooking_time ?? source.cookingTime ?? null;
+      payload.total_time = source.total_time ?? source.totalTime ?? null;
+      payload.serves = source.serves ?? source.servings ?? null;
+      payload.difficulty = source.difficulty ?? null;
+    }
+    if (state.hasCategoryFavColumns) {
+      payload.category = source.category || null;
+      payload.is_favourite = false;
+    }
+    // Attribution columns (set if migration ran; will fail silently if not).
+    payload.copied_from_recipe_id = source.id || null;
+    payload.copied_from_user_id = source.user_id || null;
+
+    try {
+      let insertedRows;
+      try {
+        insertedRows = await insertRecipeViaRest(payload);
+      } catch (error) {
+        // If the attribution columns aren't there yet, retry without them.
+        const msg = String(error?.message || "").toLowerCase();
+        if (msg.includes("copied_from")) {
+          delete payload.copied_from_recipe_id;
+          delete payload.copied_from_user_id;
+          insertedRows = await insertRecipeViaRest(payload);
+        } else {
+          throw error;
+        }
+      }
+      const inserted = Array.isArray(insertedRows) ? insertedRows[0] : null;
+      if (inserted) {
+        state.recipes.push(inserted);
+      }
+      // If we were in the friends feed, exit it so the user sees their newly saved recipe.
+      if (state.isFriendsFeedActive) {
+        state.isFriendsFeedActive = false;
+        friendsManager.updateFeedToggleVisibility();
+      }
+      setDetailOpen(false);
+      rerenderList();
+      setAppStatus(t("friends.savedToMine", { title: source.title }));
+    } catch (error) {
+      const msg = error?.message || "Unexpected error";
+      setAppStatus(t("friends.saveFailed", { error: msg }));
+      logSupabaseError("save friend recipe", error);
+    }
+  }
+
+  async function setFriendsFeedActive(nextActive) {
+    state.isFriendsFeedActive = Boolean(nextActive);
+    if (state.isFriendsFeedActive) {
+      // Refresh friend recipes before rendering.
+      await friendsManager.reloadFriendRecipesIfNeeded();
+    }
+    friendsManager.updateFeedToggleVisibility();
+    // Close detail/add forms when switching modes — they belong to the other view.
+    setDetailOpen(false);
+    setAddRecipeOpen(false);
+    rerenderList();
+  }
+
+  if (toggleFriendsFeed) {
+    toggleFriendsFeed.addEventListener("click", () => {
+      setFriendsFeedActive(!state.isFriendsFeedActive);
+    });
+  }
+
   /* ─── Shopping List ─── */
 
   function updateFloatingShoppingBadge() {
@@ -2268,7 +2430,8 @@
     const recipeId = trigger.dataset.id || trigger.closest("article.recipe-card")?.dataset.id;
     if (!recipeId) return;
 
-    const recipe = state.recipes.find((item) => item.id === recipeId);
+    const pool = state.isFriendsFeedActive ? (state.friendRecipes || []) : state.recipes;
+    const recipe = pool.find((item) => String(item.id) === String(recipeId));
     if (recipe) showDetail(recipe);
   });
 
@@ -2388,6 +2551,13 @@
       return;
     }
 
+    const saveFromFriendButton = event.target.closest("button[data-action='save-from-friend']");
+    if (saveFromFriendButton) {
+      const recipeId = saveFromFriendButton.dataset.id;
+      if (recipeId) await saveFriendRecipeToMine(recipeId);
+      return;
+    }
+
     const button = event.target.closest("button[data-action='delete']");
     if (!button) return;
 
@@ -2446,12 +2616,19 @@
         setLanguage(DEFAULT_LANGUAGE, { persistForCurrentUser: false });
         mealPlannerWeekOffset = 0;
         state.shoppingListRecipeIds = [];
+        friendsManager.resetForSignOut();
       }
       loadImportPrompt();
     } else if (justSignedIn || switchedUser || authEvent === "USER_UPDATED" || authEvent === "INITIAL_SESSION") {
       await loadThemePreference();
       await loadLanguagePreference();
       loadImportPrompt();
+      // Friends: profile + friendships load in background; failures degrade gracefully.
+      friendsManager.loadMyProfile().then(() => {
+        friendsManager.updateHeaderButtonVisibility();
+        friendsManager.updateShareToggleVisibility();
+      });
+      friendsManager.loadFriends({ refreshUi: true });
     }
 
     setAuthUi();

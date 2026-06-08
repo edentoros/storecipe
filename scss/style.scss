@@ -307,6 +307,186 @@ body.theme-dark .sunset-info-text {
   color: #bcccdc;
 }
 
+/* ─────────── My Friends ─────────── */
+.panel__title-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.panel__friends-feed-toggle {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+  min-height: 32px;
+}
+.friends-modal { max-width: 480px; }
+.friends-invite-card {
+  background: #f0f4f8;
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  margin-bottom: 0.85rem;
+}
+.friends-invite-card__label {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  color: #486581;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.friends-invite-card__row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.friends-invite-card__code {
+  flex: 1;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #102a43;
+  user-select: all;
+}
+.friends-add { margin-bottom: 0.85rem; }
+.friends-add__heading {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+.friends-add__tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+}
+.friends-add__tab {
+  flex: 1;
+  background: transparent;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+  color: #486581;
+  cursor: pointer;
+}
+.friends-add__tab--active {
+  background: #334e68;
+  border-color: #334e68;
+  color: #fff;
+}
+.friends-add__row {
+  display: flex;
+  gap: 0.4rem;
+}
+.friends-add__input {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  font: inherit;
+}
+.friends-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.friend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f4f8;
+}
+.friend-row--muted { opacity: 0.55; }
+.friend-row__info { display: flex; flex-direction: column; min-width: 0; }
+.friend-row__name {
+  font-weight: 600;
+  color: #102a43;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.friend-row__sub {
+  font-size: 0.8rem;
+  color: #627d98;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.friend-row__actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.friend-row__actions .button {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.55rem;
+  min-height: 30px;
+}
+.friends-empty {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.share-with-friends-row {
+  background: #f0f4f8;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  margin: 0.65rem 0;
+}
+.share-with-friends-row__label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.share-with-friends-row__label input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px;
+  margin: 0;
+  padding: 0 !important;
+  accent-color: #334e68;
+}
+.share-with-friends-row__hint {
+  margin: 0.3rem 0 0 1.65rem;
+  font-size: 0.82rem;
+  color: #627d98;
+}
+
+.recipe-detail-card__editable--readonly {
+  display: block;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+/* Dark theme variants */
+body.theme-dark .friends-invite-card { background: #1a3457; }
+body.theme-dark .friends-invite-card__label { color: #9fb3c8; }
+body.theme-dark .friends-invite-card__code { color: #f0f4f8; }
+body.theme-dark .friends-add__tab {
+  background: transparent;
+  border-color: #334e68;
+  color: #bcccdc;
+}
+body.theme-dark .friends-add__tab--active {
+  background: #486581;
+  border-color: #486581;
+  color: #fff;
+}
+body.theme-dark .friends-add__input {
+  background: #102a43;
+  border-color: #334e68;
+  color: #f0f4f8;
+}
+body.theme-dark .friend-row { border-color: #243b53; }
+body.theme-dark .friend-row__name { color: #f0f4f8; }
+body.theme-dark .friend-row__sub { color: #9fb3c8; }
+body.theme-dark .share-with-friends-row { background: #1a3457; }
+body.theme-dark .share-with-friends-row__hint { color: #9fb3c8; }
+
 .language-selector {
   position: relative;
   width: 100%;

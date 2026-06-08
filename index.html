@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Storecipe</title>
-    <link rel="stylesheet" href="dist/style.css?v=20260607d" />
+    <link rel="stylesheet" href="dist/style.css?v=20260608a" />
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
@@ -26,6 +26,10 @@
             <button id="openMealPlanner" class="button button--secondary app__tool-button hidden" type="button" data-i18n-title="header.plannerTitle" data-i18n-aria-label="header.plannerTitle" title="Open meal planner" aria-label="Open meal planner">
               <span aria-hidden="true">&#128197;</span>
               <span class="app__tool-button-label" data-i18n="header.planner">Planner</span>
+            </button>
+            <button id="openFriends" class="button button--secondary app__tool-button hidden" type="button" data-i18n-title="friends.title" data-i18n-aria-label="friends.openAria" title="My Friends" aria-label="Open friends">
+              <span aria-hidden="true">&#128101;</span>
+              <span class="app__tool-button-label" data-i18n="friends.openButton">Friends</span>
             </button>
             <button
               id="settingsButton"
@@ -170,17 +174,26 @@
 
       <section class="panel panel--list">
         <div class="panel__title-row">
-          <h2 data-i18n="list.title">Recipe List</h2>
-          <button
-            id="toggleAddRecipe"
-            class="icon-button"
-            type="button"
-            data-i18n-aria-label="list.showAdd"
-            aria-label="Show Add Recipe"
-            aria-expanded="false"
-          >
-            +
-          </button>
+          <h2 id="recipeListHeading" data-i18n="list.title">Recipe List</h2>
+          <div class="panel__title-actions">
+            <button
+              id="toggleFriendsFeed"
+              class="button button--ghost panel__friends-feed-toggle hidden"
+              type="button"
+              data-i18n="friends.viewFeed"
+              aria-pressed="false"
+            >View friends' recipes</button>
+            <button
+              id="toggleAddRecipe"
+              class="icon-button"
+              type="button"
+              data-i18n-aria-label="list.showAdd"
+              aria-label="Show Add Recipe"
+              aria-expanded="false"
+            >
+              +
+            </button>
+          </div>
         </div>
         <div id="recipeListLoading" class="recipe-list-loading hidden" aria-live="polite" aria-busy="true">
           <article class="recipe-list-skeleton" aria-hidden="true">
@@ -366,6 +379,14 @@
             <span id="difficultyValue" class="difficulty-value">4</span>
           </div>
 
+          <div id="shareWithFriendsRow" class="share-with-friends-row hidden">
+            <label class="share-with-friends-row__label">
+              <input id="shareWithFriendsInput" type="checkbox" />
+              <span data-i18n="friends.shareWithFriends">Share with friends</span>
+            </label>
+            <p class="share-with-friends-row__hint" data-i18n="friends.shareHint">Friends following you will see this recipe.</p>
+          </div>
+
           <div class="form-actions">
             <button id="saveRecipeButton" type="submit" data-i18n="form.save">Save Recipe</button>
             <button id="cancelEditButton" class="button button--ghost hidden" type="button" data-i18n="form.cancel">Cancel editing</button>
@@ -404,6 +425,39 @@
 
     <button id="floatingShoppingList" class="floating-shopping-btn hidden" type="button" data-i18n-aria-label="shopping.openAria" data-i18n-title="shopping.title" aria-label="Open shopping list" title="Shopping List">&#128722;<span id="floatingShoppingCount" class="floating-shopping-btn__count hidden">0</span></button>
 
+    <div id="friendsModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal friends-modal" role="dialog" aria-labelledby="friendsModalTitle">
+        <div class="modal__header">
+          <h2 id="friendsModalTitle" data-i18n="friends.title">My Friends</h2>
+          <button id="closeFriends" class="icon-button button--ghost" type="button" data-i18n-aria-label="friends.close" aria-label="Close friends">x</button>
+        </div>
+        <div class="modal__body">
+          <div class="friends-invite-card">
+            <p class="friends-invite-card__label" data-i18n="friends.myInviteCode">Your invite code</p>
+            <div class="friends-invite-card__row">
+              <code id="myInviteCode" class="friends-invite-card__code">...</code>
+              <button id="copyInviteCode" class="button button--secondary" type="button" data-i18n="friends.copyCode">Copy code</button>
+            </div>
+          </div>
+
+          <section class="friends-add">
+            <h3 class="friends-add__heading" data-i18n="friends.addHeading">Add a friend</h3>
+            <div class="friends-add__tabs" role="tablist">
+              <button id="addFriendTabCode" class="friends-add__tab friends-add__tab--active" type="button" role="tab" aria-selected="true" data-tab="code" data-i18n="friends.addByCodeTab">By invite code</button>
+              <button id="addFriendTabEmail" class="friends-add__tab" type="button" role="tab" aria-selected="false" data-tab="email" data-i18n="friends.addByEmailTab">By email</button>
+            </div>
+            <div class="friends-add__row">
+              <input id="addFriendInput" class="friends-add__input" type="text" data-i18n-placeholder="friends.codePlaceholder" placeholder="ABC-DEF-GHJ" autocomplete="off" spellcheck="false" />
+              <button id="addFriendButton" class="button" type="button" data-i18n="friends.addButton">Add friend</button>
+            </div>
+          </section>
+
+          <ul id="friendsList" class="friends-list"></ul>
+          <p id="friendsEmpty" class="empty friends-empty hidden" data-i18n="friends.empty">You haven't added any friends yet.</p>
+        </div>
+      </div>
+    </div>
+
     <div id="shoppingListModal" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal shopping-list-modal" role="dialog" aria-labelledby="shoppingListTitle">
         <div class="modal__header">
@@ -439,7 +493,8 @@
     <script defer src="src/js/features/importPromptManager.js"></script>
     <script defer src="src/js/features/recipeMetaManager.js"></script>
     <script defer src="src/js/features/recipeRenderer.js"></script>
+    <script defer src="src/js/features/friendsManager.js"></script>
     <script defer src="src/js/services/supabaseServices.js"></script>
-    <script defer src="app.js?v=20260607d"></script>
+    <script defer src="app.js?v=20260608a"></script>
   </body>
 </html>

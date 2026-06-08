@@ -31,7 +31,14 @@
       showFavouritesOnly: false,
       sortBy: "created_at_desc",
       hasShareColumns: true,
-      shoppingListRecipeIds: []
+      shoppingListRecipeIds: [],
+      // Friends
+      myProfile: null,
+      friends: [],
+      friendRecipes: [],
+      isFriendsAvailable: true,
+      isFriendsFeedActive: false,
+      isFriendsModalOpen: false
     };
   }
 

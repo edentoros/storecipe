@@ -9,6 +9,8 @@ function createSupabaseServices({ config, state, helpers }) {
     IMAGE_SIGN_TIMEOUT_MS,
     BUCKET,
     THEME_PREFERENCES_TABLE,
+    PROFILES_TABLE,
+    FRIENDSHIPS_TABLE,
     RECIPE_IMPORT_FUNCTION
   } = config;
 
@@ -165,6 +167,183 @@ function createSupabaseServices({ config, state, helpers }) {
       throw new Error(message);
     }
 
+    return Array.isArray(data) ? data : [];
+  }
+
+  // ───────────────────────────── Friends ────────────────────────────────
+
+  function getProfilesTable() {
+    return PROFILES_TABLE || "profiles";
+  }
+  function getFriendshipsTable() {
+    return FRIENDSHIPS_TABLE || "friendships";
+  }
+
+  async function fetchMyProfileViaRest(userId) {
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({
+      select: "id,email,invite_code,display_name",
+      id: `eq.${userId}`,
+      limit: "1"
+    });
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/${getProfilesTable()}?${query.toString()}`,
+      { method: "GET", headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Profile fetch failed ${response.status}`;
+      throw new Error(message);
+    }
+    return Array.isArray(data) ? data[0] || null : null;
+  }
+
+  async function lookupProfileByEmailViaRest(email) {
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({
+      select: "id,email,invite_code,display_name",
+      email: `eq.${String(email || "").trim().toLowerCase()}`,
+      limit: "1"
+    });
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/${getProfilesTable()}?${query.toString()}`,
+      { method: "GET", headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Profile lookup failed ${response.status}`;
+      throw new Error(message);
+    }
+    return Array.isArray(data) ? data[0] || null : null;
+  }
+
+  async function lookupProfileByInviteCodeViaRest(code) {
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({
+      select: "id,email,invite_code,display_name",
+      invite_code: `eq.${String(code || "").trim().toUpperCase()}`,
+      limit: "1"
+    });
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/${getProfilesTable()}?${query.toString()}`,
+      { method: "GET", headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Profile lookup failed ${response.status}`;
+      throw new Error(message);
+    }
+    return Array.isArray(data) ? data[0] || null : null;
+  }
+
+  async function fetchFriendshipsViaRest(userId) {
+    // Friendships where I am the follower, with the followee profile joined.
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({
+      select: "id,followee_id,is_muted,created_at,profile:followee_id(id,email,invite_code,display_name)",
+      follower_id: `eq.${userId}`,
+      order: "created_at.desc"
+    });
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/${getFriendshipsTable()}?${query.toString()}`,
+      { method: "GET", headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Friends fetch failed ${response.status}`;
+      throw new Error(message);
+    }
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function addFriendshipViaRest(followerId, followeeId) {
+    const accessToken = getAccessToken();
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/${getFriendshipsTable()}?on_conflict=follower_id,followee_id`,
+      {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=representation"
+        },
+        body: JSON.stringify([{ follower_id: followerId, followee_id: followeeId }])
+      }
+    );
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Add friend failed ${response.status}`;
+      throw new Error(message);
+    }
+    return Array.isArray(data) ? data[0] || null : null;
+  }
+
+  async function setFriendshipMutedViaRest(friendshipId, isMuted) {
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({ id: `eq.${friendshipId}` });
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/${getFriendshipsTable()}?${query.toString()}`,
+      {
+        method: "PATCH",
+        headers: {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation"
+        },
+        body: JSON.stringify({ is_muted: Boolean(isMuted) })
+      }
+    );
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Mute failed ${response.status}`;
+      throw new Error(message);
+    }
+    return Array.isArray(data) ? data[0] || null : null;
+  }
+
+  async function deleteFriendshipViaRest(friendshipId) {
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({ id: `eq.${friendshipId}` });
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/${getFriendshipsTable()}?${query.toString()}`,
+      {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${accessToken}`,
+          Prefer: "return=minimal"
+        }
+      }
+    );
+    if (!response.ok) {
+      const data = await parseResponse(response, {});
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Remove friend failed ${response.status}`;
+      throw new Error(message);
+    }
+    return true;
+  }
+
+  async function fetchFriendRecipesViaRest(followeeIds) {
+    const ids = (Array.isArray(followeeIds) ? followeeIds : []).filter(Boolean);
+    if (!ids.length) return [];
+    const accessToken = getAccessToken();
+    const query = new URLSearchParams({
+      select: "*",
+      is_shared_with_friends: "eq.true",
+      user_id: `in.(${ids.join(",")})`,
+      order: "created_at.desc"
+    });
+    const response = await debugFetch(
+      `${SUPABASE_URL}/rest/v1/recipes?${query.toString()}`,
+      { method: "GET", headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${accessToken}` } }
+    );
+    const data = await parseResponse(response, []);
+    if (!response.ok) {
+      const message = typeof data === "object" && data && "message" in data ? data.message : `Friend recipes fetch failed ${response.status}`;
+      throw new Error(message);
+    }
     return Array.isArray(data) ? data : [];
   }
 
@@ -486,6 +665,14 @@ function createSupabaseServices({ config, state, helpers }) {
     upsertThemePreferenceViaRest,
     fetchLanguagePreferenceViaRest,
     upsertLanguagePreferenceViaRest,
+    fetchMyProfileViaRest,
+    lookupProfileByEmailViaRest,
+    lookupProfileByInviteCodeViaRest,
+    fetchFriendshipsViaRest,
+    addFriendshipViaRest,
+    setFriendshipMutedViaRest,
+    deleteFriendshipViaRest,
+    fetchFriendRecipesViaRest,
     insertRecipeViaRest,
     updateRecipeViaRest,
     fetchRecipesViaRest,

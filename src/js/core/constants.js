@@ -9,6 +9,8 @@ const IMAGE_SIGN_TIMEOUT_MS = 1500;
 const BUCKET = "recipes";
 const LOCAL_RECIPES_KEY = "recipes_local_data_v1";
 const THEME_PREFERENCES_TABLE = "user_preferences";
+const PROFILES_TABLE = "profiles";
+const FRIENDSHIPS_TABLE = "friendships";
 const DEFAULT_THEME = "light";
 const DEFAULT_DIFFICULTY = 4;
 const THEME_LOCAL_KEY_PREFIX = "storecipe_theme_";
@@ -56,6 +58,8 @@ window.StorecipeConstants = {
   BUCKET,
   LOCAL_RECIPES_KEY,
   THEME_PREFERENCES_TABLE,
+  PROFILES_TABLE,
+  FRIENDSHIPS_TABLE,
   DEFAULT_THEME,
   DEFAULT_DIFFICULTY,
   THEME_LOCAL_KEY_PREFIX,
